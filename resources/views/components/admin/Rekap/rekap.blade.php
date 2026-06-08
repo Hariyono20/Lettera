@@ -1,115 +1,115 @@
 {{-- Filter + Search + Download --}}
 <div class="p-6 bg-white rounded-xl shadow-md">
-    <div class="flex flex-wrap items-end gap-6 mb-6">
-
-        {{-- Filter Laporan (Bulan) --}}
+    
+    {{-- Form action menggunakan url()->current() agar otomatis menyesuaikan dengan halaman Admin atau Pimpinan --}}
+    <form action="{{ url()->current() }}" method="GET" class="flex flex-wrap items-end gap-6 mb-6">
+        
+        {{-- Filter Laporan (Dinamis: Bulan, Triwulan, Semester, Tahunan) --}}
         <div>
-            <label for="filter-bulan" class="text-gray-700 text-sm font-medium mb-1 block">Filter Laporan</label>
-            <select id="filter-bulan" class="appearance-none w-48 h-10 px-3 border border-gray-300 bg-white text-gray-700 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500">
-                <option value="">Bulan</option>
-                <option value="1">Januari</option>
-                <option value="2">Februari</option>
-                <option value="3">Maret</option>
-                <option value="4">April</option>
-                <option value="5">Mei</option>
-                <option value="6">Juni</option>
-                <option value="7">Juli</option>
-                <option value="8">Agustus</option>
-                <option value="9">September</option>
-                <option value="10">Oktober</option>
-                <option value="11">November</option>
-                <option value="12">Desember</option>
+            <label for="filter-bulan" class="text-gray-700 text-sm font-medium mb-1 block">Periode Laporan</label>
+            <select name="bulan" id="filter-bulan" onchange="this.form.submit()" class="appearance-none w-56 h-10 px-3 border border-gray-300 bg-white text-gray-700 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium">
+                <option value="">Semua Bulan</option>
+                
+                <optgroup label="Bulan Biasa">
+                    @foreach([1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'] as $key => $bulan)
+                        <option value="{{ $key }}" {{ request('bulan') == $key ? 'selected' : '' }}>{{ $bulan }}</option>
+                    @endforeach
+                </optgroup>
+
+                <optgroup label="Laporan Berkala">
+                    <option value="t1" {{ request('bulan') === 't1' ? 'selected' : '' }}>Triwulan I (Jan - Mar)</option>
+                    <option value="t2" {{ request('bulan') === 't2' ? 'selected' : '' }}>Triwulan II (Apr - Jun)</option>
+                    <option value="t3" {{ request('bulan') === 't3' ? 'selected' : '' }}>Triwulan III (Jul - Sep)</option>
+                    <option value="t4" {{ request('bulan') === 't4' ? 'selected' : '' }}>Triwulan IV (Okt - Des)</option>
+                    <option value="s1" {{ request('bulan') === 's1' ? 'selected' : '' }}>Semester I (Jan - Jun)</option>
+                    <option value="s2" {{ request('bulan') === 's2' ? 'selected' : '' }}>Semester II (Jul - Des)</option>
+                    <option value="thn" {{ request('bulan') === 'thn' ? 'selected' : '' }}>Tahunan (Jan - Des)</option>
+                </optgroup>
             </select>
         </div>
 
-        {{-- Search --}}
+        {{-- Search Bar --}}
         <div class="flex-1 min-w-[200px]">
-            <label for="search" class="text-gray-700 text-sm font-medium mb-1 block">Pencarian</label>
-            <input type="text" id="search" placeholder="Cari berdasarkan jenis surat" class="w-full h-10 pl-3 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
+            <label for="search" class="text-gray-700 text-sm font-medium mb-1 block">Pencarian Data</label>
+            <input type="text" name="search" id="search" value="{{ request('search') }}" placeholder="Cari nama pemohon, jenis surat, nomor surat, alamat..." class="w-full h-10 pl-3 pr-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
         </div>
 
         {{-- Download Buttons --}}
         <div class="flex gap-3 ml-auto">
-            <button id="download-pdf" class="h-10 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 rounded-lg text-sm flex items-center justify-center gap-2">
+            <button type="button" id="download-pdf" class="h-10 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 rounded-lg text-sm flex items-center justify-center gap-2">
                 <i class="fa-solid fa-file-pdf"></i> Download PDF
             </button>
-            <button id="download-excel" class="h-10 bg-green-500 hover:bg-green-600 text-white font-semibold px-4 rounded-lg text-sm flex items-center justify-center gap-2">
+            <button type="button" id="download-excel" class="h-10 bg-green-500 hover:bg-green-600 text-white font-semibold px-4 rounded-lg text-sm flex items-center justify-center gap-2">
                 <i class="fa-solid fa-file-excel"></i> Download Excel
             </button>
         </div>
-    </div>
+    </form>
 </div>
 
-{{-- Table --}}
+{{-- Table Data Rekap Lengkap --}}
 <div class="bg-white shadow-lg rounded-2xl p-5 w-full mt-6">
-    <h2 class="text-xl font-semibold text-gray-700 mb-3">Rekap Per Jenis Surat</h2>
+    <h2 class="text-xl font-semibold text-gray-700 mb-3">Laporan Rekapitulasi Pelayanan Surat</h2>
     <hr class="mb-4 border-gray-300">
     <div class="w-full overflow-x-auto">
-        <div class="min-w-[700px] lg:min-w-[800px]">
-
-            {{-- Header --}}
-            <div class="grid grid-cols-6 gap-3 text-gray-600 text-[15px] font-semibold mb-3 px-1 text-center">
-                <p>Jenis Surat</p>
-                <p>Total</p>
-                <p>Selesai</p>
-                <p>Proses</p>
-                <p>Ditolak</p>
-                <p>Persentase Selesai</p>
-            </div>
-
-            {{-- Table Body (Data Dummy) --}}
-            <div id="table-body" class="space-y-3 text-[14px] text-gray-700 text-center">
-                <div class="row-item grid grid-cols-6 gap-3 items-center bg-gray-50 p-3 rounded-xl">
-                    <p class="jenis">Surat Domisili</p>
-                    <p class="total">25</p>
-                    <p class="selesai">15</p>
-                    <p class="proses">7</p>
-                    <p class="ditolak">3</p>
-                    <p class="font-semibold text-[#04C220] persen">60%</p>
-                    <p class="hidden bulan-val">1</p>
-                </div>
-                <div class="row-item grid grid-cols-6 gap-3 items-center bg-gray-50 p-3 rounded-xl">
-                    <p class="jenis">Pengantar SKCK</p>
-                    <p class="total">18</p>
-                    <p class="selesai">12</p>
-                    <p class="proses">4</p>
-                    <p class="ditolak">2</p>
-                    <p class="font-semibold text-[#04C220] persen">67%</p>
-                    <p class="hidden bulan-val">2</p>
-                </div>
-                <div class="row-item grid grid-cols-6 gap-3 items-center bg-gray-50 p-3 rounded-xl">
-                    <p class="jenis">Surat Usaha</p>
-                    <p class="total">10</p>
-                    <p class="selesai">6</p>
-                    <p class="proses">3</p>
-                    <p class="ditolak">1</p>
-                    <p class="font-semibold text-[#04C220] persen">60%</p>
-                    <p class="hidden bulan-val">3</p>
-                </div>
-                <div class="row-item grid grid-cols-6 gap-3 items-center bg-gray-50 p-3 rounded-xl">
-                    <p class="jenis">Surat Kematian</p>
-                    <p class="total">8</p>
-                    <p class="selesai">5</p>
-                    <p class="proses">2</p>
-                    <p class="ditolak">1</p>
-                    <p class="font-semibold text-[#04C220] persen">62%</p>
-                    <p class="hidden bulan-val">1</p>
-                </div>
-            </div>
-        </div>
+        <table class="w-full min-w-[1100px] text-sm text-center text-gray-700 border-collapse">
+            <thead>
+                <tr class="bg-gray-100 text-gray-600 font-semibold uppercase text-xs border-b border-gray-300">
+                    <th class="py-3 px-4 text-left">Nama Pemohon</th>
+                    <th class="py-3 px-4">Jenis Surat</th>
+                    <th class="py-3 px-4">Nomor Surat</th>
+                    <th class="py-3 px-4 text-left">Alamat</th>
+                    <th class="py-3 px-4">Status</th>
+                    <th class="py-3 px-4">Tanggal</th>
+                </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-gray-200">
+                @forelse($rekapData as $data)
+                    <tr class="row-item bg-white hover:bg-gray-50 transition">
+                        <td class="py-3 px-4 text-left font-medium text-gray-900 nama-warga">
+                            {{ $data->nama_pemohon }}
+                        </td>
+                        <td class="py-3 px-4 font-medium jenis-surat">
+                            {{ $data->jenisSurat->nama_surat ?? 'N/A' }}
+                        </td>
+                        <td class="py-3 px-4 font-mono text-xs text-gray-600 nomor-surat">
+                            {{ $data->nomor_surat_fix }}
+                        </td>
+                        <td class="py-3 px-4 text-left text-gray-600 alamat-warga">
+                            {{ $data->alamat_pemohon }}
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700 capitalize status-surat">
+                                {{ $data->status }}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 tgl-selesai">
+                            {{ \Carbon\Carbon::parse($data->tanggal_selesai)->translatedFormat('d F Y') }}
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" class="p-8 text-gray-400 italic text-center bg-gray-50">
+                            Belum ada rekapitulasi data surat yang diselesaikan.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
     </div>
 </div>
 
-{{-- Pagination (UI sama seperti contoh awal) --}}
+{{-- Pagination --}}
 <div class="max-w-7xl mx-auto flex justify-between items-center mt-6 px-1 text-[14px] text-[#111827] font-inter">
-    <div id="pagination-info">Menampilkan 1 hingga 5 dari 4 hasil</div>
+    <div id="pagination-info">Menampilkan 0 hingga 0 dari 0 hasil</div>
     <div class="flex gap-1" id="pagination-controls"></div>
 </div>
 
-{{-- JS Filter + Search + Pagination + Download (UI Pagination seperti contoh awal) --}}
+{{-- Script Pendukung Export Data --}}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const filterBulan = document.getElementById('filter-bulan');
     const searchInput = document.getElementById('search');
     const rows = Array.from(document.querySelectorAll('.row-item'));
     const info = document.getElementById('pagination-info');
@@ -122,16 +122,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const rowsPerPage = 10;
 
     function renderTable() {
-        const bulanVal = filterBulan.value;
         const searchVal = searchInput.value.toLowerCase();
 
         const filtered = rows.filter(row => {
-            const jenisText = row.querySelector('.jenis').textContent.toLowerCase();
-            const persenText = row.querySelector('.persen').textContent.toLowerCase();
-            const bulanRow = row.querySelector('.bulan-val').textContent;
-
-            return (bulanVal === '' || bulanVal === bulanRow) &&
-                   (searchVal === '' || jenisText.includes(searchVal) || persenText.includes(searchVal));
+            const namaText = row.querySelector('.nama-warga').textContent.toLowerCase();
+            const jenisText = row.querySelector('.jenis-surat').textContent.toLowerCase();
+            const nomorText = row.querySelector('.nomor-surat').textContent.toLowerCase();
+            const alamatText = row.querySelector('.alamat-warga').textContent.toLowerCase();
+            
+            return (searchVal === '' || namaText.includes(searchVal) || jenisText.includes(searchVal) || nomorText.includes(searchVal) || alamatText.includes(searchVal));
         });
 
         const totalRows = filtered.length;
@@ -141,7 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
 
-        // Reset table
         rows.forEach(r => r.style.display = 'none');
         filtered.slice(start, end).forEach(r => r.style.display = '');
 
@@ -149,92 +147,110 @@ document.addEventListener('DOMContentLoaded', function() {
         const endRow = end > totalRows ? totalRows : end;
         info.textContent = `Menampilkan ${startRow} hingga ${endRow} dari ${totalRows} hasil`;
 
-        // Build pagination UI
         controls.innerHTML = '';
         if(totalPages > 1) {
-            // PREV
             const prevBtn = document.createElement('button');
             prevBtn.className = 'flex items-center justify-center w-8 h-8 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40';
-            prevBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-            </svg>`;
+            prevBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>`;
             prevBtn.disabled = currentPage === 1;
             prevBtn.addEventListener('click', () => { currentPage--; renderTable(); });
             controls.appendChild(prevBtn);
 
-            // Numbers
-            for(let i=1;i<=totalPages;i++){
+            for(let i = 1; i <= totalPages; i++){
                 const btn = document.createElement('button');
-                btn.className = `flex items-center justify-center w-8 h-8 border rounded font-semibold ${i===currentPage?'border-blue-500 bg-blue-500 text-white':'border-gray-300 text-gray-700 hover:bg-gray-100'}`;
+                btn.className = `flex items-center justify-center w-8 h-8 border rounded font-semibold ${i === currentPage ? 'border-blue-500 bg-blue-500 text-white' : 'border-gray-300 text-gray-700 hover:bg-gray-100'}`;
                 btn.textContent = i;
-                btn.addEventListener('click', () => { currentPage=i; renderTable(); });
+                btn.addEventListener('click', () => { currentPage = i; renderTable(); });
                 controls.appendChild(btn);
             }
 
-            // NEXT
             const nextBtn = document.createElement('button');
             nextBtn.className = 'flex items-center justify-center w-8 h-8 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40';
-            nextBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-            </svg>`;
+            nextBtn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
             nextBtn.disabled = currentPage === totalPages;
             nextBtn.addEventListener('click', () => { currentPage++; renderTable(); });
             controls.appendChild(nextBtn);
         }
     }
 
-    // Download Excel
+    // 🛠 Download Excel (Hanya mendownload baris data yang lolos filter pencarian)
     downloadExcelBtn.addEventListener('click', function() {
         const wb = XLSX.utils.book_new();
-        const wsData = [["Jenis Surat","Total","Selesai","Proses","Ditolak","Persentase Selesai"]];
+        const wsData = [["Nama Pemohon", "Jenis Surat", "Nomor Surat", "Alamat", "Status", "Tanggal Selesai"]];
+        const searchVal = searchInput.value.toLowerCase();
+        
         rows.forEach(row => {
-            if(row.style.display !== 'none'){
+            const namaText = row.querySelector('.nama-warga').textContent.toLowerCase();
+            const jenisText = row.querySelector('.jenis-surat').textContent.toLowerCase();
+            const nomorText = row.querySelector('.nomor-surat').textContent.toLowerCase();
+            const alamatText = row.querySelector('.alamat-warga').textContent.toLowerCase();
+            
+            const matchesSearch = (searchVal === '' || namaText.includes(searchVal) || jenisText.includes(searchVal) || nomorText.includes(searchVal) || alamatText.includes(searchVal));
+
+            if(matchesSearch){
                 wsData.push([
-                    row.querySelector('.jenis').textContent,
-                    row.querySelector('.total').textContent,
-                    row.querySelector('.selesai').textContent,
-                    row.querySelector('.proses').textContent,
-                    row.querySelector('.ditolak').textContent,
-                    row.querySelector('.persen').textContent
+                    row.querySelector('.nama-warga').textContent.trim(),
+                    row.querySelector('.jenis-surat').textContent.trim(),
+                    row.querySelector('.nomor-surat').textContent.trim(),
+                    row.querySelector('.alamat-warga').textContent.trim(),
+                    row.querySelector('.status-surat').textContent.trim(),
+                    row.querySelector('.tgl-selesai').textContent.trim()
                 ]);
             }
         });
         const ws = XLSX.utils.aoa_to_sheet(wsData);
-        XLSX.utils.book_append_sheet(wb, ws, "Rekap Surat");
-        XLSX.writeFile(wb, "Rekap_Surat.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "Rekap Pelayanan");
+        XLSX.writeFile(wb, "Rekap_Laporan_Pelayanan_Surat.xlsx");
     });
 
-    // Download PDF
+    // 🛠 Download PDF (Hanya memasukkan baris data yang lolos filter pencarian)
     downloadPdfBtn.addEventListener('click', function() {
         const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        let y = 10;
-        doc.setFontSize(12);
-        doc.text("Rekap Per Jenis Surat", 10, y);
-        y += 10;
-        const headers = ["Jenis Surat","Total","Selesai","Proses","Ditolak","Persentase Selesai"];
-        headers.forEach((h, i) => doc.text(h, 10 + i*30, y));
+        const doc = new jsPDF('l', 'mm', 'a4'); 
+        let y = 15;
+        
+        doc.setFontSize(14);
+        doc.text("LAPORAN REKAPITULASI PELAYANAN SURAT KELURAHAN ARGOMULYO", 10, y);
+        y += 12;
+        
+        doc.setFontSize(10);
+        const headers = ["Nama Pemohon", "Jenis Surat", "Nomor Surat", "Alamat", "Status", "Tanggal"];
+        const positions = [10, 55, 100, 165, 225, 250]; 
+        
+        headers.forEach((h, i) => doc.text(h, positions[i], y));
+        y += 4;
+        doc.line(10, y, 285, y);
         y += 7;
+
+        const searchVal = searchInput.value.toLowerCase();
+
         rows.forEach(row => {
-            if(row.style.display !== 'none'){
-                const data = [
-                    row.querySelector('.jenis').textContent,
-                    row.querySelector('.total').textContent,
-                    row.querySelector('.selesai').textContent,
-                    row.querySelector('.proses').textContent,
-                    row.querySelector('.ditolak').textContent,
-                    row.querySelector('.persen').textContent
-                ];
-                data.forEach((d,i) => doc.text(d, 10 + i*30, y));
-                y += 7;
+            const namaText = row.querySelector('.nama-warga').textContent.toLowerCase();
+            const jenisText = row.querySelector('.jenis-surat').textContent.toLowerCase();
+            const nomorText = row.querySelector('.nomor-surat').textContent.toLowerCase();
+            const alamatText = row.querySelector('.alamat-warga').textContent.toLowerCase();
+            
+            const matchesSearch = (searchVal === '' || namaText.includes(searchVal) || jenisText.includes(searchVal) || nomorText.includes(searchVal) || alamatText.includes(searchVal));
+
+            if(matchesSearch){
+                doc.text(row.querySelector('.nama-warga').textContent.trim().substring(0, 20), positions[0], y);
+                doc.text(row.querySelector('.jenis-surat').textContent.trim().substring(0, 20), positions[1], y);
+                doc.text(row.querySelector('.nomor-surat').textContent.trim().substring(0, 28), positions[2], y);
+                doc.text(row.querySelector('.alamat-warga').textContent.trim().substring(0, 26), positions[3], y);
+                doc.text(row.querySelector('.status-surat').textContent.trim(), positions[4], y);
+                doc.text(row.querySelector('.tgl-selesai').textContent.trim(), positions[5], y);
+                y += 8;
+                
+                if(y > 190) { 
+                    doc.addPage();
+                    y = 15;
+                }
             }
         });
-        doc.save("Rekap_Surat.pdf");
+        doc.save("Rekap_Laporan_Pelayanan_Surat.pdf");
     });
 
-    filterBulan.addEventListener('change', () => { currentPage = 1; renderTable(); });
     searchInput.addEventListener('input', () => { currentPage = 1; renderTable(); });
-
     renderTable();
 });
 </script>

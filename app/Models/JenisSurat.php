@@ -13,9 +13,9 @@ class JenisSurat extends Model
 
     protected $fillable = [
         'nama_surat',
-        'jenis', 
+        'jenis',
         'deskripsi',
-        'template_file',
+        'template_surat',
         'fields',
         'is_active',
     ];
@@ -24,4 +24,16 @@ class JenisSurat extends Model
         'fields' => 'array',
         'is_active' => 'boolean',
     ];
+
+    /*
+    |--------------------------------------------------------------------------
+    | RELATION
+    |--------------------------------------------------------------------------
+    */
+
+    // Semua pengajuan surat
+    public function surats()
+    {
+        return $this->hasMany(Surat::class);
+    }
 }

@@ -6,21 +6,62 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    public function up()
+    public function up(): void
     {
         Schema::create('jenis_surats', function (Blueprint $table) {
+
             $table->id();
+
+            /*
+            |--------------------------------------------------------------------------
+            | INFORMASI SURAT
+            |--------------------------------------------------------------------------
+            */
+
+            // Nama surat
             $table->string('nama_surat');
-            $table->string('jenis')->nullable(); 
+
+            // Kategori surat
+            $table->string('jenis')->nullable();
+
+            // Deskripsi singkat
             $table->text('deskripsi')->nullable();
-            $table->string('template_file')->nullable(); 
-            $table->json('fields')->nullable(); 
-            $table->boolean('is_active')->default(true); 
+
+            /*
+            |--------------------------------------------------------------------------
+            | TEMPLATE SURAT
+            |--------------------------------------------------------------------------
+            */
+
+            // Template text surat
+            // contoh:
+            // Nama : {{nama}}
+            $table->longText('template_surat')->nullable();
+
+            /*
+            |--------------------------------------------------------------------------
+            | FORM DINAMIS
+            |--------------------------------------------------------------------------
+            */
+
+            // JSON dynamic fields
+            $table->json('fields')->nullable();
+
+            /*
+            |--------------------------------------------------------------------------
+            | STATUS
+            |--------------------------------------------------------------------------
+            */
+
+            // aktif / nonaktif
+            $table->boolean('is_active')
+                ->default(true);
+
             $table->timestamps();
         });
     }
 
-    public function down()
+    public function down(): void
     {
         Schema::dropIfExists('jenis_surats');
     }

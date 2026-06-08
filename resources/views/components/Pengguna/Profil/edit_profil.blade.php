@@ -1,136 +1,136 @@
 @extends('layouts.pengajuan_surat')
 
 @section('content')
-    <div class="w-full mx-auto px-6 py-10">
+    <div class="w-full max-w-full mx-auto px-4 sm:px-6 py-2">
 
         {{-- Back Button --}}
-        <a href="{{ url()->previous() }}"
-            class="inline-flex items-center text-gray-600 hover:text-blue-800 mb-8 text-base transition">
-            <span class="text-xl mr-2">←</span> Kembali
+        <a href="{{ route('profil.saya') }}"
+            class="inline-flex items-center text-gray-500 hover:text-blue-700 mb-4 text-xs font-semibold transition">
+            <span class="text-sm mr-1.5">←</span> Kembali ke Profil
         </a>
 
-        <form class="bg-white shadow-lg rounded-3xl p-12 max-w-6xl w-full mx-auto space-y-12 border border-gray-100"
+        <form class="bg-white shadow-sm rounded-2xl p-5 lg:p-7 max-w-5xl w-full mx-auto space-y-6 border border-gray-200"
             id="editProfileForm" action="{{ route('profil.update') }}" method="POST" enctype="multipart/form-data">
             @csrf
 
-            {{-- Header --}}
-            <div class="relative mb-8">
-                <span class="absolute top-0 right-0 bg-blue-500 text-white px-4 py-1.5 rounded-full text-sm font-semibold">
-                    Edit Profil
+            {{-- Header Form --}}
+            <div class="relative pb-3 border-b border-gray-100">
+                <span class="absolute top-0 right-0 bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded-full text-[10px] font-bold">
+                    Formulir Modifikasi
                 </span>
-                <h2 class="text-3xl font-bold text-gray-900">Profil Saya</h2>
-                <hr class="mt-4 border-gray-200">
+                <h2 class="text-base font-bold text-gray-900">Ubah Profil Anda</h2>
+                <p class="text-xs text-gray-400 mt-0.5">Pastikan data kependudukan diisi dengan data yang valid</p>
             </div>
 
-            {{-- DATA PRIBADI --}}
+            {{-- SEKSI 1: DATA PRIBADI --}}
             <div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-6">Data Pribadi</h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-4">Data Pribadi</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
 
                     {{-- NIK --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">NIK</label>
-                        <input name="nik" type="text" value="{{ auth()->user()->nik }}"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">NIK</label>
+                        <input name="nik" type="text" value="{{ old('nik', auth()->user()->nik) }}"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        @error('nik') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- NAMA --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Nama Lengkap</label>
-                        <input name="nama" type="text" value="{{ auth()->user()->nama }}"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Nama Lengkap</label>
+                        <input name="nama" type="text" value="{{ old('nama', auth()->user()->nama) }}"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        @error('nama') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- JENIS KELAMIN --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Jenis Kelamin</label>
-                        <select name="jenis_kelamin" class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
-                            <option value="">-- Pilih --</option>
-                            <option value="laki-laki" {{ auth()->user()->jenis_kelamin == 'laki-laki' ? 'selected' : '' }}>
-                                Laki-Laki
-                            </option>
-                            <option value="perempuan" {{ auth()->user()->jenis_kelamin == 'perempuan' ? 'selected' : '' }}>
-                                Perempuan
-                            </option>
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Jenis Kelamin</label>
+                        <select name="jenis_kelamin" class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition cursor-pointer">
+                            <option value="">-- Pilih Jenis Kelamin --</option>
+                            {{-- Pengecekan disamakan dengan inisial database L atau P --}}
+                            <option value="laki-laki" {{ old('jenis_kelamin', auth()->user()->jenis_kelamin) == 'L' || old('jenis_kelamin') == 'laki-laki' ? 'selected' : '' }}>Laki-laki</option>
+                            <option value="perempuan" {{ old('jenis_kelamin', auth()->user()->jenis_kelamin) == 'P' || old('jenis_kelamin') == 'perempuan' ? 'selected' : '' }}>Perempuan</option>
                         </select>
+                        @error('jenis_kelamin') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- TANGGAL LAHIR --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Tanggal Lahir</label>
-                        <input name="tanggal_lahir" type="date" value="{{ auth()->user()->tanggal_lahir }}"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Tanggal Lahir</label>
+                        <input name="tanggal_lahir" type="date" value="{{ old('tanggal_lahir', auth()->user()->tanggal_lahir) }}"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        @error('tanggal_lahir') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- USERNAME --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Username</label>
-                        <input name="username" type="text" value="{{ auth()->user()->username }}"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Username</label>
+                        <input name="username" type="text" value="{{ old('username', auth()->user()->username) }}"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        @error('username') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- ALAMAT --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Alamat</label>
-                        <textarea name="alamat" rows="3" class="w-full border border-gray-300 rounded-2xl p-5 text-base">{{ auth()->user()->alamat }}</textarea>
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Alamat</label>
+                        <textarea name="alamat" rows="2" class="w-full border border-gray-300 rounded-xl p-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition resize-none leading-relaxed">{{ old('alamat', auth()->user()->alamat) }}</textarea>
+                        @error('alamat') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
-
                 </div>
             </div>
 
-            {{-- INFORMASI KONTAK --}}
-            <div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-6">Informasi Kontak</h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
+            {{-- SEKSI 2: INFORMASI KONTAK --}}
+            <div class="pt-4 border-t border-gray-100">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-4">Informasi Kontak</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {{-- NO WA --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">No. WhatsApp</label>
-                        <input name="no_wa" type="text" value="{{ auth()->user()->no_wa }}"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">No. WhatsApp</label>
+                        <input name="no_wa" type="text" value="{{ old('no_wa', auth()->user()->no_wa) }}"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        @error('no_wa') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- EMAIL --}}
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Email</label>
-                        <input name="email" type="email" value="{{ auth()->user()->email }}"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Email</label>
+                        <input name="email" type="email" value="{{ old('email', auth()->user()->email) }}"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        @error('email') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     {{-- BIO --}}
-                    <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Bio</label>
-                        <textarea name="bio" rows="3" class="w-full border border-gray-300 rounded-2xl p-5 text-base">{{ auth()->user()->bio }}</textarea>
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Bio Deskripsi</label>
+                        <textarea name="bio" rows="2" class="w-full border border-gray-300 rounded-xl p-3 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition resize-none leading-relaxed">{{ old('bio', auth()->user()->bio) }}</textarea>
+                        @error('bio') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
-
                 </div>
             </div>
 
-            {{-- PASSWORD UPDATE --}}
-            <div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-6">Ubah Password (Opsional)</h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
+            {{-- SEKSI 3: PASSWORD --}}
+            <div class="pt-4 border-t border-gray-100">
+                <h3 class="text-xs font-bold uppercase tracking-wider text-blue-600 mb-1">Ubah Keamanan Akun</h3>
+                <p class="text-[11px] text-gray-400 mb-4">Kosongkan kolom sandi jika Anda tidak berniat merubah password akun.</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Password Baru</label>
-                        <input name="password" type="password"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Password Baru</label>
+                        <input name="password" type="password" placeholder="Minimal 6 karakter"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
+                        @error('password') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
                     </div>
 
                     <div>
-                        <label class="text-sm font-medium text-gray-700 mb-2 block">Konfirmasi Password</label>
-                        <input name="password_confirmation" type="password"
-                            class="w-full h-14 px-5 border border-gray-300 rounded-2xl text-base">
+                        <label class="text-xs font-semibold text-gray-600 mb-1 block">Konfirmasi Password</label>
+                        <input name="password_confirmation" type="password" placeholder="Ulangi sandi baru"
+                            class="w-full h-10 px-3 border border-gray-300 rounded-xl text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition">
                     </div>
-
                 </div>
             </div>
 
-            {{-- FOTO PROFIL --}}
-            <div x-data="{
+            {{-- SEKSI 4: FOTO PROFIL (ALPINE JS) --}}
+            <div class="pt-4 border-t border-gray-100" x-data="{
                 fileName: '',
                 previewUrl: '{{ auth()->user()->foto ? asset('storage/foto/' . auth()->user()->foto) : '' }}',
                 hasPreview: {{ auth()->user()->foto ? 'true' : 'false' }},
@@ -149,55 +149,47 @@
                     document.getElementById('file-upload').value = '';
                 }
             }">
-                <label class="text-sm font-medium text-gray-700 mb-2 block">Foto Profil</label>
+                <label class="text-xs font-semibold text-gray-600 mb-2 block">Unggah Foto Profil Baru</label>
 
-                {{-- Preview Gambar --}}
-                <div x-show="hasPreview" class="mb-4 relative inline-block">
-                    <img :src="previewUrl" alt="Preview"
-                        class="w-32 h-32 object-cover rounded-full border-4 border-gray-200 shadow-lg">
-
+                <div x-show="hasPreview" class="mb-3 relative inline-block">
+                    <img :src="previewUrl" alt="Preview" class="w-24 h-24 object-cover rounded-full border-2 border-gray-200 shadow-sm">
                     <button type="button" @click="removeImage"
-                        class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 transition shadow-lg">
-                        <i class="fa-solid fa-times"></i>
+                        class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition shadow text-xs">
+                        <i class="fa-solid fa-times text-[10px]"></i>
                     </button>
                 </div>
 
-                {{-- Upload Area - Sembunyikan saat ada preview --}}
                 <div x-show="!hasPreview">
-                    <input type="file" name="foto" id="file-upload" class="hidden" accept=".jpg,.jpeg,.png"
-                        @change="previewImage($event)">
-
+                    <input type="file" name="foto" id="file-upload" class="hidden" accept=".jpg,.jpeg,.png" @change="previewImage($event)">
                     <label for="file-upload"
-                        class="mt-3 border-2 border-dashed border-gray-300 rounded-2xl p-10 text-center hover:border-blue-400 hover:bg-gray-50 transition cursor-pointer flex flex-col items-center justify-center">
-
-                        <i class="fa-solid fa-upload text-4xl text-gray-400 mb-3"></i>
-                        <p class="text-gray-600 text-base mb-1">Pilih file atau tarik ke sini</p>
-                        <p class="text-sm text-gray-500 mb-2">JPG, PNG • Maks 2MB</p>
-
+                        class="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-gray-50 transition cursor-pointer flex flex-col items-center justify-center">
+                        <i class="fa-solid fa-upload text-xl text-gray-400 mb-1.5"></i>
+                        <p class="text-gray-700 text-xs font-semibold mb-0.5">Pilih Berkas Gambar</p>
+                        <p class="text-[10px] text-gray-400">JPG, PNG up to 2MB</p>
                     </label>
                 </div>
+                @error('foto') <p class="text-red-500 text-[10px] mt-1">{{ $message }}</p> @enderror
             </div>
 
-            {{-- BUTTONS --}}
-            <div class="flex justify-end items-center pt-6 gap-4">
+            {{-- TOMBOL AKSI --}}
+            <div class="flex justify-end items-center pt-4 gap-3 border-t border-gray-100">
                 <button type="reset"
-                    class="flex items-center gap-2 px-6 py-3 rounded-xl border border-gray-300 text-gray-700 text-base">
-                    <i class="fa-solid fa-rotate-left"></i>
+                    class="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-300 text-gray-600 hover:bg-gray-50 rounded-xl text-xs font-semibold transition">
+                    <i class="fa-solid fa-rotate-left text-[11px]"></i>
                     <span>Reset</span>
                 </button>
 
                 <button type="submit"
-                    class="flex items-center gap-2 px-8 py-3 rounded-xl bg-blue-600 text-white text-base">
-                    <i class="fa-solid fa-save text-lg"></i>
-                    <span>Simpan</span>
+                    class="inline-flex items-center gap-1.5 px-5 py-2 bg-blue-600 text-white rounded-xl text-xs font-semibold hover:bg-blue-700 transition shadow-sm">
+                    <i class="fa-solid fa-save text-[11px]"></i>
+                    <span>Simpan Perubahan</span>
                 </button>
             </div>
 
         </form>
-
     </div>
 
-    {{-- SCRIPT --}}
+    {{-- SCRIPTS --}}
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
@@ -205,23 +197,32 @@
 
         form.addEventListener('reset', () => {
             setTimeout(() => {
-                document.querySelector('[x-data]').__x.$data.fileName = '';
+                const alpineData = document.querySelector('[x-data]').__x.$data;
+                alpineData.fileName = '';
+                alpineData.previewUrl = '{{ auth()->user()->foto ? asset("storage/foto/" . auth()->user()->foto) : "" }}';
+                alpineData.hasPreview = {{ auth()->user()->foto ? 'true' : 'false' }};
             }, 10);
         });
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
-
             Swal.fire({
-                icon: 'success',
-                title: 'Berhasil',
-                text: 'Perubahan profil telah disimpan!',
-                confirmButtonText: 'OK',
+                icon: 'question',
+                title: 'Simpan Data?',
+                text: 'Pastikan data yang Anda masukkan sudah benar.',
+                showCancelButton: true,
+                confirmButtonText: 'Ya, Simpan',
+                cancelButtonText: 'Batal',
                 customClass: {
-                    popup: 'p-7 rounded-2xl'
+                    popup: 'p-5 rounded-2xl text-xs',
+                    confirmButton: 'bg-blue-600 text-white px-4 py-2 rounded-xl font-bold mr-2 text-xs',
+                    cancelButton: 'bg-gray-100 text-gray-700 px-4 py-2 rounded-xl font-bold text-xs'
+                },
+                buttonsStyling: false
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    form.submit();
                 }
-            }).then(() => {
-                form.submit();
             });
         });
     </script>

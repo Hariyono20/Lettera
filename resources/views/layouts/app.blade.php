@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'Digitalisasi Surat' }}</title>
+    <title>{{ $title ?? 'Pelayanan Administrasi Surat Kelurahan' }}</title>
 
     {{-- Tailwind CSS --}}
     @vite('resources/css/app.css')
@@ -30,29 +30,25 @@
             {{-- Statistik --}}
             @include('components.Pengguna.Dashboard.statistik')
 
-            {{-- WRAPPER UTAMA → Dua Kolom (Responsive) --}}
-            <div class="flex flex-col lg:flex-row gap-6 mt-6">
+            {{-- WRAPPER UTAMA → Distribusi Proporsi Dua Kolom yang Ideal --}}
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
 
-                {{-- Left Column → Pengajuan --}}
-                <div class="flex-1">
+                {{-- Kolom Kiri: Tabel Pengajuan Terbaru (Mengambil Porsi Lebih Luas: 2/3) --}}
+                <div class="lg:col-span-2 w-full">
                     @include('components.Pengguna.pengajuan')
                 </div>
 
-                {{-- Right Column → Tracking + Support --}}
-                <div class="flex-1 flex flex-col gap-6">
+                {{-- Kolom Kanan: Tracking & Support (Mengambil Porsi Pas: 1/3) --}}
+                <div class="flex flex-col gap-6 w-full">
 
-                    {{-- Card Tracking --}}
-                    <div class="flex justify-start">
-                        <div class="w-full sm:w-[340px]">
-                            @include('components.Pengguna.tracking')
-                        </div>
+                    {{-- Card Tracking (Wrapper kaku dihapus agar fleksibel mengikuti kolom) --}}
+                    <div class="w-full">
+                        @include('components.Pengguna.tracking')
                     </div>
 
-                    {{-- Card Support --}}
-                    <div class="flex justify-start">
-                        <div class="w-full sm:w-[328px]">
-                            @include('components.Pengguna.support')
-                        </div>
+                    {{-- Card Support (Wrapper kaku dihapus agar fleksibel mengikuti kolom) --}}
+                    <div class="w-full">
+                        @include('components.Pengguna.support')
                     </div>
 
                 </div>
@@ -61,9 +57,9 @@
         </main>
 
         {{-- Footer --}}
-        <footer class="bg-white shadow-inner py-4 text-center">
-            <small class="text-gray-500">
-                © {{ date('Y') }} Digitalisasi Surat. All rights reserved.
+        <footer class="bg-white border-t border-gray-100 py-3.5 text-center flex-shrink-0">
+            <small class="text-xs text-gray-500 font-medium tracking-wide">
+                © {{ date('Y') }} Sistem Pelayanan Administrasi Kelurahan Argomulyo. All rights reserved.
             </small>
         </footer>
 

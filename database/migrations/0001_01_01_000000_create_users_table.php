@@ -9,31 +9,31 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up()
-{
-    Schema::create('users', function (Blueprint $table) {
-        $table->id();
-        $table->string('nama');
-        $table->string('username')->unique();
-        $table->string('email')->unique();
-        $table->string('password');
+    public function up(): void
+    {
+        Schema::create('users', function (Blueprint $table) {
+            $table->id();
 
-        $table->string('nik', 20)->unique();
-        $table->date('tanggal_lahir')->nullable();
-        $table->string('jenis_kelamin')->nullable(); 
-        $table->text('alamat')->nullable(); 
-        $table->string('foto')->nullable(); 
+            // Data Utama
+            $table->string('nama');
+            $table->string('email')->unique();
+            $table->string('password');
 
-        $table->string('no_wa', 20)->nullable();
-        $table->enum('role', ['penduduk','pegawai','admin'])->default('penduduk');
-        $table->text('bio')->nullable();
+            // Data Profil Wajib
+            $table->date('tanggal_lahir');
+            $table->enum('jenis_kelamin', ['L', 'P']);
+            $table->text('alamat');
+            $table->string('no_wa', 20);
 
-        $table->rememberToken();
-        $table->timestamps();
-    });
-}
+            // Pengaturan Sistem
+            $table->enum('role', ['penduduk', 'pegawai', 'admin', 'pimpinan'])->default('penduduk');
+            $table->string('foto')->nullable();
+            $table->text('bio')->nullable();
 
-
+            $table->rememberToken();
+            $table->timestamps();
+        });
+    }
 
     /**
      * Reverse the migrations.
@@ -41,7 +41,5 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('sessions');
     }
 };

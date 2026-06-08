@@ -17,39 +17,38 @@
 
         {{-- Tombol Ajukan --}}
         <a href="{{ route('pengajuan.surat') }}"
-            class="bg-blue-600 text-white px-4 py-2 rounded 
+            class="bg-blue-600 text-white px-4 py-2 rounded-xl 
                    flex items-center gap-2 hover:bg-blue-700 transition 
-                   w-full sm:w-auto justify-center">
+                   w-full sm:w-auto justify-center text-xs font-semibold shadow-sm">
             <i class="fas fa-plus"></i>
             <span>Ajukan Surat Baru</span>
         </a>
 
-        {{-- Notifikasi --}}
-        <button class="relative text-gray-700 hover:text-gray-900 
-                       w-full sm:w-auto flex justify-center items-center">
-            <div class="relative inline-block">
-                <i class="fas fa-bell text-lg"></i>
-
-                {{-- Badge menempel sempurna pada icon --}}
-                <span class="absolute -top-1 -right-1 w-2.5 h-2.5 
-                             bg-red-500 rounded-full border border-white"></span>
-            </div>
-        </button>
-
         {{-- Profil --}}
         <a href="{{ route('profil.saya') }}"
-           class="flex items-center gap-3 
+           class="flex items-center gap-3 group
                   w-full sm:w-auto justify-center sm:justify-start">
 
-            <img src="/images/pp.png" class="w-10 h-10 rounded-full object-cover">
+            {{-- Foto Profil Dinamis --}}
+            <div class="w-10 h-10 rounded-full overflow-hidden border border-gray-200 shadow-sm flex-shrink-0">
+                <img src="{{ auth()->user()->foto ? asset('storage/foto/' . auth()->user()->foto) : asset('default/avatar.png') }}" 
+                     alt="Foto Profil" 
+                     class="w-full h-full object-cover group-hover:scale-105 transition duration-200">
+            </div>
 
             {{-- Info user muncul di layar > sm --}}
-            <div class="hidden sm:flex flex-col leading-tight">
-                <span class="font-medium text-gray-900">
-                    {{ $user->name ?? 'Penduduk' }}
+            <div class="hidden sm:flex flex-col leading-tight min-w-0 max-w-[150px]">
+                <span class="font-semibold text-xs text-gray-900 truncate group-hover:text-blue-600 transition">
+                    {{ auth()->user()->nama ?? 'Penduduk' }}
                 </span>
-                <span class="text-sm text-gray-500">
-                    {{ $user->nik ?? '221293982843' }}
+                
+                {{-- NIK Tersembunyi (Hanya 3 Angka Terakhir) --}}
+                <span class="text-[11px] text-gray-400 font-medium truncate mt-0.5">
+                    @if(auth()->user()->nik)
+                        NIK #{{ str_repeat('*', strlen(auth()->user()->nik) - 3) . substr(auth()->user()->nik, -3) }}
+                    @else
+                        NIK #-
+                    @endif
                 </span>
             </div>
 

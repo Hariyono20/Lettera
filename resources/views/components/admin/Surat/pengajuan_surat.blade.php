@@ -1,308 +1,382 @@
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
 
+    {{-- Header --}}
     <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">Upload Template Surat</h1>
-        <p class="text-gray-600 mt-2">Upload template DOCX dan definisikan apa saja yang diperlukan</p>
+
+        <h1 class="text-2xl font-bold text-gray-800 tracking-tight sm:text-3xl">
+            Buat Template Surat
+        </h1>
+
+        <p class="text-sm text-gray-500 mt-1">
+            Buat template surat dinamis untuk digunakan pengguna saat pengajuan surat.
+        </p>
+
     </div>
 
+    {{-- Error Session --}}
     @if (session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6">
-            <i class="fas fa-exclamation-circle mr-2"></i>{{ session('error') }}
+
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 text-sm flex items-center gap-2 shadow-sm">
+
+            <i class="fas fa-exclamation-circle text-red-500 flex-shrink-0"></i>
+            <span>{{ session('error') }}</span>
+
         </div>
+
     @endif
 
-    <div class="bg-white rounded-xl shadow-lg p-6" x-data="templateUploader()">
-        <form action="{{ route('admin.surat.upload') }}" method="POST" enctype="multipart/form-data">
+    {{-- Validation Error --}}
+    @if ($errors->any())
+
+        <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl mb-6 shadow-sm">
+
+            <div class="font-medium text-sm mb-1.5 flex items-center gap-2">
+                <i class="fas fa-ban text-red-500 flex-shrink-0"></i> Periksa kembali isian Anda:
+            </div>
+
+            <ul class="list-disc pl-5 text-xs space-y-0.5 text-red-600">
+
+                @foreach ($errors->all() as $error)
+
+                    <li>{{ $error }}</li>
+
+                @endforeach
+
+            </ul>
+
+        </div>
+
+    @endif
+
+    {{-- MAIN CARD --}}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6"
+        x-data="templateBuilder">
+
+        <form action="{{ route('admin.surat.store') }}"
+            method="POST">
+
             @csrf
 
-            {{-- Pilih Jenis Surat --}}
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-2">
-                    <label class="block text-sm font-medium text-gray-700">
-                        <i class="fas fa-file-alt text-blue-600 mr-2"></i>Pilih Jenis Surat
+            {{-- ========================================================= --}}
+            {{-- INFORMASI SURAT --}}
+            {{-- ========================================================= --}}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+
+                {{-- Nama Surat --}}
+                <div>
+
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+                        Nama Surat
                     </label>
-                    <button type="button" @click="showModal = true"
-                        class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
-                        <i class="fas fa-plus-circle"></i>
-                        Tambah Jenis Baru
-                    </button>
+
+                    <input type="text"
+                        name="nama_surat"
+                        value="{{ old('nama_surat') }}"
+                        placeholder="Contoh: Surat Keterangan Domisili"
+                        class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none shadow-sm">
+
                 </div>
 
-                <select name="jenis_surat_id" id="jenis_surat_select" required
-                    class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    <option value="">-- Pilih Jenis Surat --</option>
-                    @foreach ($jenisSuratList as $jenis)
-                        <option value="{{ $jenis->id }}">
-                            {{ $jenis->nama_surat }}
-                            @if ($jenis->jenis)
-                                ({{ ucfirst($jenis->jenis) }})
-                            @endif
-                        </option>
-                    @endforeach
-                </select>
+                {{-- Jenis/Kategori Surat (Hybrid: Select + Manual Input) --}}
+                <div>
 
-                @error('jenis_surat_id')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Upload File --}}
-            <div class="mb-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-file-word text-blue-600 mr-2"></i>File Template (.docx)
-                </label>
-                <input type="file" name="template_file" accept=".docx" required
-                    class="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 p-2.5">
-                <p class="text-xs text-gray-500 mt-2">
-                    Gunakan placeholder: <code class="bg-gray-100 px-2 py-1 rounded">${'nama'}</code>
-                </p>
-                @error('template_file')
-                    <p class="text-red-500 text-sm mt-1">{{ $message }}</p>
-                @enderror
-            </div>
-
-            {{-- Dynamic Fields --}}
-            <div class="mb-6">
-                <div class="flex justify-between items-center mb-4">
-                    <label class="block text-sm font-medium text-gray-700">
-                        <i class="fas fa-list text-blue-600 mr-2"></i>Field yang Diperlukan
-                    </label>
-                    <button type="button" @click="addField"
-                        class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700">
-                        <i class="fas fa-plus mr-2"></i>Tambah Field
-                    </button>
-                </div>
-
-                <div class="space-y-3">
-                    <template x-for="(field, index) in fields" :key="index">
-                        <div class="flex gap-3 items-start bg-gray-50 p-4 rounded-lg border">
-                            <div class="flex-1">
-                                <input type="text" x-model="field.name" :name="'fields[' + index + '][name]'"
-                                    placeholder="nama" class="w-full px-3 py-2 border rounded-lg" required>
-                            </div>
-                            <div class="flex-1">
-                                <input type="text" x-model="field.label" :name="'fields[' + index + '][label]'"
-                                    placeholder="Nama Lengkap" class="w-full px-3 py-2 border rounded-lg" required>
-                            </div>
-                            <div class="w-32">
-                                <select x-model="field.type" :name="'fields[' + index + '][type]'"
-                                    class="w-full px-3 py-2 border rounded-lg">
-                                    <option value="text">Text</option>
-                                    <option value="textarea">Textarea</option>
-                                    <option value="date">Tanggal</option>
-                                    <option value="number">Angka</option>
-                                </select>
-                            </div>
-                            <div class="flex items-center pt-2">
-                                <input type="checkbox" x-model="field.required"
-                                    :name="'fields[' + index + '][required]'" class="w-4 h-4">
-                                <label class="ml-1 text-sm">Wajib</label>
-                            </div>
-                            <button type="button" @click="removeField(index)"
-                                class="p-2 text-red-600 hover:bg-red-50 rounded-lg">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                        </div>
-                    </template>
-                </div>
-
-                <div x-show="fields.length === 0" class="text-center py-8 text-gray-500">
-                    <i class="fas fa-inbox text-4xl mb-3"></i>
-                    <p>Klik "Tambah Field" untuk menambahkan field</p>
-                </div>
-            </div>
-
-            {{-- Submit --}}
-            <div class="flex gap-3">
-                <button type="submit"
-                    class="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700">
-                    <i class="fas fa-upload mr-2"></i>Upload Template
-                </button>
-                <a href="{{ route('admin.surat') }}"
-                    class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300">
-                    Batal
-                </a>
-            </div>
-        </form>
-
-        {{-- ✅ MODAL DI LUAR FORM UTAMA --}}
-        <div x-show="showModal" x-cloak class="fixed inset-0 z-50 overflow-y-auto" style="display: none;"
-            @keydown.escape.window="showModal = false">
-
-            {{-- Backdrop --}}
-            <div class="fixed inset-0 bg-black/50 transition-opacity" @click="showModal = false"></div>
-
-            {{-- Modal Content --}}
-            <div class="flex min-h-screen items-center justify-center p-4">
-                <div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full p-6 z-50" @click.stop>
-
-                    {{-- Header --}}
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-xl font-bold text-gray-800">
-                            <i class="fas fa-plus-circle text-blue-600 mr-2"></i>
-                            Tambah Jenis Surat Baru
-                        </h3>
-                        <button type="button" @click="showModal = false"
-                            class="text-gray-400 hover:text-gray-600 transition">
-                            <i class="fas fa-times text-xl"></i>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                            Kategori Surat
+                        </label>
+                        
+                        <!-- Toggle Manual Input Button -->
+                        <button type="button" 
+                            @click="isManualCategory = !isManualCategory; if(!isManualCategory) manualCategory = ''"
+                            class="text-[11px] text-blue-600 font-medium hover:underline flex items-center gap-1 focus:outline-none">
+                            <span x-text="isManualCategory ? '✕ Pilih dari Daftar' : '+ Ketik Manual'"></span>
                         </button>
                     </div>
 
-                    {{-- Form Modal (TERPISAH dari form utama) --}}
-                    <div>
-                        {{-- Nama Surat --}}
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Nama Surat <span class="text-red-500">*</span>
-                            </label>
-                            <input type="text" x-model="formData.nama_surat"
-                                placeholder="Contoh: Surat Keterangan Kelahiran"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                        </div>
+                    <!-- Mode 1: Dropdown Select -->
+                    <div x-show="!isManualCategory" x-transition:enter="transition ease-out duration-200">
+                        <select :name="!isManualCategory ? 'jenis' : ''"
+                            class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none bg-white shadow-sm">
 
-                        {{-- Kategori/Jenis --}}
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Kategori <span class="text-red-500">*</span>
-                            </label>
-                            <select x-model="formData.jenis"
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                <option value="">-- Pilih Kategori --</option>
-                                <option value="sktm">SKTM</option>
-                                <option value="domisili">Domisili</option>
-                                <option value="usaha">Usaha</option>
-                                <option value="lainnya">Lainnya</option>
-                            </select>
-                        </div>
+                            <option value="">-- Pilih Kategori --</option>
+                            <option value="sktm">Surat Ket. Tidak Mampu (SKTM)</option>
+                            <option value="domisili">Surat Ket. Domisili</option>
+                            <option value="usaha">Surat Ket. Izin Usaha (SKU)</option>
+                            <option value="kerja">Surat Ket. Kerja / Penghasilan</option>
+                            <option value="kelahiran">Surat Ket. Kelahiran</option>
+                            <option value="kematian">Surat Ket. Kematian</option>
+                            <option value="pindah">Surat Ket. Pindah Datang</option>
+                            <option value="pernyataan">Surat Pernyataan / Kuasa</option>
+                            <option value="lainnya">Lainnya</option>
 
-                        {{-- Deskripsi --}}
-                        <div class="mb-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Deskripsi <span class="text-red-500">*</span>
-                            </label>
-                            <textarea x-model="formData.deskripsi" rows="3" placeholder="Contoh: Surat keterangan untuk..."
-                                class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
-                        </div>
-
-                        {{-- Loading State --}}
-                        <div x-show="loading" class="mb-4 text-center text-sm text-gray-600">
-                            <i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...
-                        </div>
-
-                        {{-- Error State --}}
-                        <div x-show="error"
-                            class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg text-sm">
-                            <i class="fas fa-exclamation-circle mr-2"></i>
-                            <span x-text="error"></span>
-                        </div>
-
-                        {{-- Buttons --}}
-                        <div class="flex gap-3">
-                            <button type="button" @click="submitJenisSurat" :disabled="loading"
-                                class="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                                <i class="fas fa-save mr-2"></i>Simpan
-                            </button>
-                            <button type="button" @click="showModal = false" :disabled="loading"
-                                class="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-lg font-semibold hover:bg-gray-300 transition disabled:opacity-50">
-                                Batal
-                            </button>
-                        </div>
+                        </select>
                     </div>
+
+                    <!-- Mode 2: Teks Input Manual -->
+                    <div x-show="isManualCategory" x-cloak x-transition:enter="transition ease-out duration-200">
+                        <input type="text"
+                            :name="isManualCategory ? 'jenis' : ''"
+                            x-model="manualCategory"
+                            placeholder="Masukkan nama kategori baru..."
+                            class="w-full px-3.5 py-2.5 text-sm border border-blue-400 bg-blue-50/10 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none shadow-sm font-medium">
+                    </div>
+
                 </div>
+
             </div>
-        </div>
+
+            {{-- ========================================================= --}}
+            {{-- DESKRIPSI --}}
+            {{-- ========================================================= --}}
+
+            <div class="mb-5">
+
+                <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
+                    Deskripsi Surat
+                </label>
+
+                <textarea name="deskripsi"
+                    rows="2"
+                    placeholder="Masukkan deskripsi singkat fungsi surat ini..."
+                    class="w-full px-3.5 py-2.5 text-sm border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition outline-none resize-none shadow-sm">{{ old('deskripsi') }}</textarea>
+
+            </div>
+
+            {{-- ========================================================= --}}
+            {{-- TEMPLATE SURAT --}}
+            {{-- ========================================================= --}}
+
+            <div class="mb-5">
+
+                <div class="flex justify-between items-center mb-2">
+
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Template Surat
+                    </label>
+
+                    <div class="text-[10px] text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md font-semibold">
+                        Dinamis Editor
+                    </div>
+
+                </div>
+
+                <textarea name="template_surat"
+                    rows="8"
+                    placeholder="Tulis isi format isi atau draft surat di sini..."
+                    class="w-full px-3.5 py-3 border border-gray-300 rounded-xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 font-mono text-sm tracking-normal transition outline-none shadow-sm">{{ old('template_surat') }}</textarea>
+
+                {{-- Placeholder Clean Inline Style --}}
+                <div class="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-gray-500 border-t border-gray-100 pt-2.5">
+                    
+                    <span class="font-medium text-gray-600 flex items-center gap-1">
+                        <i class="fas fa-info-circle text-blue-500"></i> Placeholder Tersedia:
+                    </span>
+                    
+                    <div class="flex flex-wrap items-center gap-1.5 font-mono">
+                        <code class="bg-gray-50 px-1.5 py-0.5 border border-gray-200 text-blue-600 rounded text-[11px] shadow-sm select-all">@{{nama}}</code>
+                        <code class="bg-gray-50 px-1.5 py-0.5 border border-gray-200 text-blue-600 rounded text-[11px] shadow-sm select-all">@{{nik}}</code>
+                        <code class="bg-gray-50 px-1.5 py-0.5 border border-gray-200 text-blue-600 rounded text-[11px] shadow-sm select-all">@{{alamat}}</code>
+                        <code class="bg-gray-50 px-1.5 py-0.5 border border-gray-200 text-blue-600 rounded text-[11px] shadow-sm select-all">@{{keperluan}}</code>
+                    </div>
+
+                </div>
+
+            </div>
+
+            {{-- ========================================================= --}}
+            {{-- DYNAMIC FIELD --}}
+            {{-- ========================================================= --}}
+
+            <div class="mb-6">
+
+                <div class="flex justify-between items-center mb-3">
+
+                    <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                        Dynamic Form Field
+                    </label>
+
+                    {{-- Button --}}
+                    <button type="button"
+                        @click="addField()"
+                        class="px-3 py-2 bg-blue-600 text-white rounded-xl text-xs font-medium hover:bg-blue-700 active:scale-[0.98] transition flex items-center gap-1.5 shadow-sm shadow-blue-500/10">
+
+                        <i class="fas fa-plus text-[10px]"></i>
+                        Tambah Input
+
+                    </button>
+
+                </div>
+
+                {{-- Dynamic List --}}
+                <div class="space-y-3">
+
+                    <template x-for="(field, index) in fields"
+                        :key="index">
+
+                        <div class="bg-gray-50/60 border border-gray-200 rounded-xl p-4 relative transition hover:border-gray-300">
+
+                            <!-- Grid Responsif: Stack di HP (1 kolom), Grid 12 Kolom di Desktop -->
+                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3.5 items-end">
+
+                                {{-- Name --}}
+                                <div class="md:col-span-3">
+
+                                    <label class="text-[11px] font-semibold text-gray-500 uppercase mb-1 block">
+                                        Variable Name
+                                    </label>
+
+                                    <input type="text"
+                                        x-model="field.name"
+                                        :name="'fields[' + index + '][name]'"
+                                        placeholder="contoh: nik"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white focus:border-blue-500 outline-none shadow-sm">
+
+                                </div>
+
+                                {{-- Label --}}
+                                <div class="md:col-span-4">
+
+                                    <label class="text-[11px] font-semibold text-gray-500 uppercase mb-1 block">
+                                        Label Form (User)
+                                    </label>
+
+                                    <input type="text"
+                                        x-model="field.label"
+                                        :name="'fields[' + index + '][label]'"
+                                        placeholder="contoh: Nomor Induk Kependudukan"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white focus:border-blue-500 outline-none shadow-sm">
+
+                                </div>
+
+                                {{-- Type --}}
+                                <div class="md:col-span-3">
+
+                                    <label class="text-[11px] font-semibold text-gray-500 uppercase mb-1 block">
+                                        Tipe Inputan
+                                    </label>
+
+                                    <select x-model="field.type"
+                                        :name="'fields[' + index + '][type]'"
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-xs bg-white focus:border-blue-500 outline-none shadow-sm">
+
+                                        <option value="text">Text (Pendek)</option>
+                                        <option value="textarea">Textarea (Panjang)</option>
+                                        <option value="date">Tanggal (Date)</option>
+                                        <option value="number">Angka (Number)</option>
+
+                                    </select>
+
+                                </div>
+
+                                {{-- Kontrol Aksi (Wajib & Hapus): Flexbox responsif --}}
+                                <div class="md:col-span-2 flex items-center justify-between md:justify-around pt-2 md:pt-0 border-t border-gray-200/60 md:border-t-0">
+                                    
+                                    {{-- Required Checkbox --}}
+                                    <label class="flex items-center gap-2 md:flex-col md:gap-1 cursor-pointer group">
+                                        <span class="text-[10px] text-gray-400 group-hover:text-gray-600 font-semibold uppercase tracking-wider transition">Wajib</span>
+                                        <input type="checkbox"
+                                            x-model="field.required"
+                                            :name="'fields[' + index + '][required]'"
+                                            class="w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-0 focus:ring-offset-0 cursor-pointer shadow-sm">
+                                    </label>
+
+                                    {{-- Delete Button --}}
+                                    <button type="button"
+                                        @click="removeField(index)"
+                                        class="text-red-500 hover:text-red-700 p-2 transition rounded-xl hover:bg-red-50 flex items-center gap-1 md:gap-0">
+                                        <i class="fas fa-trash text-xs"></i>
+                                        <span class="text-xs font-medium md:hidden">Hapus Field</span>
+                                    </button>
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </template>
+
+                </div>
+
+                {{-- Empty State --}}
+                <div x-show="fields.length === 0"
+                    class="text-center py-8 border border-dashed border-gray-200 rounded-xl mt-2 bg-gray-50/30">
+
+                    <i class="fas fa-sliders-h text-xl text-gray-300 mb-1"></i>
+
+                    <p class="text-xs text-gray-400">
+                        Belum ada kustomisasi form field data pemohon.
+                    </p>
+
+                </div>
+
+            </div>
+
+            {{-- ========================================================= --}}
+            {{-- ACTION BUTTONS --}}
+            {{-- ========================================================= --}}
+
+            <div class="flex flex-col-reverse sm:flex-row items-center justify-end gap-2.5 border-t border-gray-100 pt-4">
+
+                {{-- Cancel --}}
+                <a href="{{ route('admin.surat') }}"
+                    class="w-full sm:w-auto text-center px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-xl text-xs font-semibold transition active:scale-[0.98]">
+                    Batal
+                </a>
+
+                {{-- Submit --}}
+                <button type="submit"
+                    class="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition active:scale-[0.98] shadow-sm shadow-blue-500/10 flex items-center justify-center gap-1.5">
+                    <i class="fas fa-check text-[10px]"></i>
+                    Simpan Template
+                </button>
+
+            </div>
+
+        </form>
+
     </div>
+
 </div>
 
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+{{-- ========================================================= --}}
+{{-- ALPINE JS --}}
+{{-- ========================================================= --}}
+
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
 <script>
-    function templateUploader() {
-        return {
+
+    document.addEventListener('alpine:init', () => {
+
+        Alpine.data('templateBuilder', () => ({
+
             fields: [],
-            showModal: false,
-            loading: false,
-            error: '',
-            formData: {
-                nama_surat: '',
-                jenis: '',
-                deskripsi: ''
-            },
+            isManualCategory: false, // State pendeteksi input manual/select
+            manualCategory: '',
 
             addField() {
+
                 this.fields.push({
+
                     name: '',
                     label: '',
                     type: 'text',
-                    required: true
+                    required: false
+
                 });
+
             },
 
             removeField(index) {
+
                 this.fields.splice(index, 1);
-            },
 
-            async submitJenisSurat() {
-                // Validasi input
-                if (!this.formData.nama_surat || !this.formData.jenis || !this.formData.deskripsi) {
-                    this.error = 'Semua field wajib diisi!';
-                    return;
-                }
-
-                this.loading = true;
-                this.error = '';
-
-                try {
-                    const response = await fetch('{{ route('admin.jenis_surat.store') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify(this.formData)
-                    });
-
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        // Tambahkan option baru ke select
-                        const select = document.getElementById('jenis_surat_select');
-                        const option = new Option(
-                            `${data.jenis_surat.nama_surat} (${data.jenis_surat.jenis})`,
-                            data.jenis_surat.id,
-                            true, // defaultSelected
-                            true // selected
-                        );
-                        select.add(option);
-
-                        // Reset form
-                        this.formData = {
-                            nama_surat: '',
-                            jenis: '',
-                            deskripsi: ''
-                        };
-
-                        // Tutup modal
-                        this.showModal = false;
-
-                        // Success notification
-                        alert('✅ Jenis surat berhasil ditambahkan!');
-                    } else {
-                        this.error = data.message || 'Gagal menyimpan data';
-                    }
-                } catch (err) {
-                    this.error = 'Terjadi kesalahan saat menyimpan';
-                    console.error('Error:', err);
-                } finally {
-                    this.loading = false;
-                }
             }
-        }
-    }
-</script>
 
-<style>
-    [x-cloak] {
-        display: none !important;
-    }
-</style>
+        }));
+
+    });
+
+</script>

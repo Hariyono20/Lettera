@@ -5,10 +5,10 @@
     <div class="bg-white shadow-md rounded-xl p-5 flex justify-between items-center">
         <div>
             <p class="text-gray-600 text-sm">Total Pengajuan</p>
-            <h2 class="text-3xl font-bold">6</h2>
+            <h2 class="text-3xl font-bold">{{ $statistik['total'] }}</h2>
             <div class="flex items-center gap-1 text-[#16A34A] text-xs mt-1">
                 <i class="fa-solid fa-arrow-up"></i>
-                <span>Bulan ini</span>
+                <span>Aktif</span>
             </div>
         </div>
         <div class="bg-blue-100 text-blue-600 p-3 rounded-xl">
@@ -20,10 +20,10 @@
     <div class="bg-white shadow-md rounded-xl p-5 flex justify-between items-center">
         <div>
             <p class="text-gray-600 text-sm">Selesai</p>
-            <h2 class="text-3xl font-bold">3</h2>
+            <h2 class="text-3xl font-bold">{{ $statistik['selesai'] }}</h2>
             <div class="flex items-center gap-1 text-[#16A34A] text-xs mt-1">
                 <i class="fa-solid fa-check"></i>
-                <span>Bulan ini</span>
+                <span>Arsip resmi</span>
             </div>
         </div>
         <div class="bg-green-100 text-green-600 p-3 rounded-xl">
@@ -35,10 +35,10 @@
     <div class="bg-white shadow-md rounded-xl p-5 flex justify-between items-center">
         <div>
             <p class="text-gray-600 text-sm">Sedang Diproses</p>
-            <h2 class="text-3xl font-bold">2</h2>
+            <h2 class="text-3xl font-bold">{{ $statistik['proses'] }}</h2>
             <div class="flex items-center gap-1 text-indigo-600 text-xs mt-1">
                 <i class="fa-solid fa-sync"></i>
-                <span>Bulan ini</span>
+                <span>Butuh tindakan</span>
             </div>
         </div>
         <div class="bg-indigo-100 text-indigo-600 p-3 rounded-xl">
@@ -50,10 +50,10 @@
     <div class="bg-white shadow-md rounded-xl p-5 flex justify-between items-center">
         <div>
             <p class="text-gray-600 text-sm">Ditolak</p>
-            <h2 class="text-3xl font-bold">1</h2>
+            <h2 class="text-3xl font-bold">{{ $statistik['ditolak'] }}</h2>
             <div class="flex items-center gap-1 text-red-600 text-xs mt-1">
                 <i class="fa-solid fa-times"></i>
-                <span>Bulan ini</span>
+                <span>Tidak valid</span>
             </div>
         </div>
         <div class="bg-red-100 text-red-600 p-3 rounded-xl">

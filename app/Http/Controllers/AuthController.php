@@ -20,90 +20,80 @@ class AuthController extends Controller
     }
 
     public function register(Request $r)
-{
-    $r->validate([
-        'nama' => 'required|string|max:255',
-        'username' => 'required|string|unique:users|max:255',
-        'email' => 'required|email|unique:users|max:255',
-        'password' => 'required|string|min:6|confirmed',
-
-        'nik' => 'required|string|unique:users|digits:16',
-        'tanggal_lahir' => 'required|date|before:today',
-        'jenis_kelamin' => 'required|in:L,P',
-        'alamat' => 'required|string|max:255',
-        'no_wa' => 'required|string|regex:/^[0-9]{10,15}$/'
-    ]);
-
-    try {
-        User::create([
-            'nama' => $r->nama,
-            'username' => $r->username,
-            'email' => $r->email,
-            'password' => Hash::make($r->password),
-
-            'nik' => $r->nik,
-            'tanggal_lahir' => $r->tanggal_lahir,
-            'jenis_kelamin' => $r->jenis_kelamin,
-            'alamat' => $r->alamat,
-            'no_wa' => $r->no_wa,
-
-            'role' => 'penduduk',
+    {
+        $r->validate([
+            'nama' => 'required|string|max:255',
+            'email' => 'required|email|unique:users|max:255',
+            'tanggal_lahir' => 'required|date|before:today',
+            'jenis_kelamin' => 'required|in:L,P',
+            'alamat' => 'required|string|max:255',
+            'no_wa' => 'required|string|regex:/^[0-9]{10,15}$/',
+            'password' => 'required|string|min:6|confirmed',
         ]);
 
-        return redirect()->route('login')
-            ->with('success', 'Registrasi berhasil! Silakan login.');
-                
-    } catch (\Exception $e) {
-        return back()
-            ->withInput($r->except('password', 'password_confirmation'))
-            ->with('error', 'Terjadi kesalahan. Coba lagi.');
-    }
-}
+        try {
+            User::create([
+                'nama' => $r->nama,
+                'email' => $r->email,
+                'tanggal_lahir' => $r->tanggal_lahir,
+                'jenis_kelamin' => $r->jenis_kelamin,
+                'alamat' => $r->alamat,
+                'no_wa' => $r->no_wa,
+                'password' => Hash::make($r->password),
+                'role' => 'penduduk',
+            ]);
 
+            return redirect()->route('login')
+                ->with('success', 'Registrasi berhasil! Silakan login.');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput($r->except('password', 'password_confirmation'))
+                ->with('error', 'Terjadi kesalahan. Coba lagi.');
+        }
+    }
 
     public function login(Request $r)
     {
+        // Login menggunakan email sesuai instruksi
         $r->validate([
-            'username' => 'required|string',
+            'email' => 'required|email',
             'password' => 'required|string'
-        ], [
-            'username.required' => 'Username wajib diisi',
-            'password.required' => 'Password wajib diisi'
         ]);
 
-        // Cek apakah user ada
-        $user = User::where('username', $r->username)->first();
-        
+        $user = User::where('email', $r->email)->first();
+
         if (!$user) {
             return back()
-                ->withInput($r->only('username'))
-                ->with('error', 'Username tidak ditemukan!');
+                ->withInput($r->only('email'))
+                ->with('error', 'Email tidak ditemukan!');
         }
 
-        // Attempt login
-        if (Auth::attempt($r->only('username', 'password'), $r->filled('remember'))) {
+        if (Auth::attempt($r->only('email', 'password'), $r->filled('remember'))) {
             $r->session()->regenerate();
 
-            // Redirect berdasarkan role
-            $redirectRoute = in_array(auth()->user()->role, ['admin', 'pegawai'])
-                        ? 'admin.dashboard'
-                        : 'user.dashboard';
+            $user = auth()->user();
 
+            // ROLE BASED REDIRECT
+            if (in_array($user->role, ['admin', 'pegawai'])) {
+                return redirect()->route('admin.dashboard');
+            }
 
-            return redirect()->route($redirectRoute)
-                ->with('success', 'Selamat datang, ' . auth()->user()->nama . '!');
+            if ($user->role === 'pimpinan') {
+                return redirect()->route('pimpinan.dashboard');
+            }
+
+            return redirect()->route('user.dashboard');
         }
 
-        // Password salah
         return back()
-            ->withInput($r->only('username'))
+            ->withInput($r->only('email'))
             ->with('error', 'Password salah!');
     }
 
     public function logout(Request $r)
     {
-        $userName = auth()->user()->nama; // Simpan nama sebelum logout
-        
+        $userName = auth()->user()->nama;
+
         Auth::logout();
         $r->session()->invalidate();
         $r->session()->regenerateToken();

@@ -1,4 +1,4 @@
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
 
     {{-- Card: Jumlah Pengajuan per Bulan --}}
     <div class="bg-white p-5 rounded-xl shadow-md">
@@ -20,58 +20,57 @@
 
 </div>
 
+{{-- CDNs Chart.js --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
 
 <script>
     // -------------------------------------------------------------
-    // Chart 1 — Pengajuan Per Bulan
+    // Chart 1 — Pengajuan Per Bulan (Dinamis dari Database)
     // -------------------------------------------------------------
-    // -------------------------------------------------------------
-    // Chart 1 — Pengajuan Per Bulan
-    // -------------------------------------------------------------
+    const dataBulanan = {!! json_encode($chartBulananData) !!};
+    const labelsBulanan = {!! json_encode($chartBulananLabels) !!};
+
     new Chart(document.getElementById('chartPengajuan'), {
-    type: 'bar',
-    data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
-        datasets: [{
-            data: [30, 24, 35, 40, 20, 20],
-            backgroundColor: '#3B82F6',
-            borderRadius: 8,
-
-            // ⚡ bar lebih ramping & rapat
-            barThickness: 146,
-            maxBarThickness: 48,
-            categoryPercentage: 0.5,   
-            barPercentage: 0.7      
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: { 
-                beginAtZero: true,
-                ticks: { font: { size: 12 } }
-            },
-            x: { 
-                ticks: { font: { size: 12 } }
-            },
+        type: 'bar',
+        data: {
+            labels: labelsBulanan,
+            datasets: [{
+                data: dataBulanan,
+                backgroundColor: '#3B82F6',
+                borderRadius: 8,
+                barThickness: 48,
+                maxBarThickness: 48,
+                categoryPercentage: 0.5,   
+                barPercentage: 0.7      
+            }]
         },
-        plugins: {
-            legend: { display: false }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { 
+                    beginAtZero: true,
+                    ticks: { 
+                        font: { size: 12 },
+                        precision: 0 // Menghindari angka desimal pada skala jumlah surat
+                    }
+                },
+                x: { 
+                    ticks: { font: { size: 12 } }
+                },
+            },
+            plugins: {
+                legend: { display: false }
+            }
         }
-    }
-});
-
-
-
+    });
 
     // -------------------------------------------------------------
-    // Chart 2 — Jenis Surat Terbanyak (PERSENTASE DI DALAM DONUT)
+    // Chart 2 — Jenis Surat Terbanyak (PERSENTASE DI DALAM DONUT RIIL)
     // -------------------------------------------------------------
-    const jenisData = [35, 40, 20, 15, 5];
-    const jenisLabels = ['Domisili', 'SKCK', 'Usaha', 'Kelahiran', 'Lainnya'];
+    const jenisData = {!! json_encode($chartJenisData) !!};
+    const jenisLabels = {!! json_encode($chartJenisLabels) !!};
     const total = jenisData.reduce((a, b) => a + b, 0);
 
     new Chart(document.getElementById('chartJenisSurat'), {
@@ -101,8 +100,7 @@
                         font: { size: 12 }
                     }
                 },
-
-                // ⚡ PERSENTASE DI DALAM DOUGHNUT
+                // Persentase dinamis berdasarkan kalkulasi total data di database
                 datalabels: {
                     color: '#ffffff',
                     font: {
@@ -110,6 +108,7 @@
                         size: 12
                     },
                     formatter: (value) => {
+                        if (total === 0) return '0%';
                         const percentage = ((value / total) * 100).toFixed(0);
                         return percentage + '%';
                     }
@@ -118,5 +117,4 @@
         },
         plugins: [ChartDataLabels]
     });
-
 </script>

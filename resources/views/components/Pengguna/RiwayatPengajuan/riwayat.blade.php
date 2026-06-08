@@ -1,289 +1,270 @@
+{{-- resources/views/components/pengguna/riwayatpengajuan/riwayat.blade.php --}}
+
 @extends('layouts.pengajuan_surat')
 
 @section('content')
-    {{-- ========================= --}}
-    {{--     CDN jsPDF            --}}
-    {{-- ========================= --}}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    {{-- ========================= --}}
-    {{-- Filter & Search --}}
-    {{-- ========================= --}}
-    <div class="bg-white p-6 w-full max-w-7xl mx-auto mb-6">
-        <div class="flex flex-wrap gap-6 items-start">
+{{-- Kontainer luar dengan jarak atas yang ideal --}}
+<div class="w-full max-w-full mx-auto px-4 sm:px-6 py-5 mt-2">
 
-            {{-- Generate Filter --}}
-            @php
-                $filters = [
-                    [
-                        'id' => 'filter-status',
-                        'label' => 'Filter Status',
-                        'options' => [
-                            '' => 'Semua Status',
-                            'Verifikasi' => 'Verifikasi',
-                            'Proses' => 'Proses',
-                            'Selesai' => 'Selesai',
-                            'Ditolak' => 'Ditolak',
-                        ],
-                    ],
-                    [
-                        'id' => 'filter-jenis-surat',
-                        'label' => 'Filter Jenis Surat',
-                        'options' =>
-                            [
-                                '' => 'Semua Jenis Surat',
-                            ] + $suratList->pluck('jenisSurat.nama', 'jenisSurat.nama')->unique()->toArray(),
-                    ],
-                ];
-            @endphp
+    {{-- Alert Berhasil (Proporsional & Rapi) --}}
+    @if(session('success'))
+        <div class="mb-5 bg-green-50 border border-green-200 rounded-2xl px-4 py-3 flex items-start gap-3 shadow-sm">
+            <div class="w-9 h-9 rounded-xl bg-green-100 flex items-center justify-center text-green-700 flex-shrink-0 text-sm">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-green-800 text-sm">Berhasil</h4>
+                <p class="text-green-700 mt-0.5 text-xs">{{ session('success') }}</p>
+            </div>
+        </div>
+    @endif
 
-            @foreach ($filters as $filter)
-                <div>
-                    <label for="{{ $filter['id'] }}" class="text-gray-700 text-sm font-medium mb-1 block">
-                        {{ $filter['label'] }}
-                    </label>
-                    <div class="relative w-[223px]">
-                        <select id="{{ $filter['id'] }}"
-                            class="w-full h-10 px-3 border border-gray-300 bg-white text-gray-600 text-sm rounded-lg appearance-none focus:ring-blue-500 focus:border-blue-500 cursor-pointer">
-                            @foreach ($filter['options'] as $value => $label)
-                                <option value="{{ $value }}">{{ $label }}</option>
+    {{-- ======================================================================================== --}}
+    {{-- CARD PANEL FILTER & SEARCH (MEDIUM SIZE & SPACED) --}}
+    {{-- ======================================================================================== --}}
+    <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-5 mb-5">
+        <form action="{{ request()->url() }}" method="GET" class="w-full">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 @if(request('search') || request('jenis_surat') || request('status')) lg:grid-cols-5 @else lg:grid-cols-4 @endif gap-4 items-center">
+                
+                {{-- 1. Input Search --}}
+                <div class="relative w-full sm:col-span-2">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
+                        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                    </span>
+                    <input type="text" name="search" value="{{ request('search') }}"
+                        placeholder="Cari kode pengajuan..." 
+                        class="w-full pl-9 pr-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 placeholder-gray-400 transition shadow-sm">
+                </div>
+                
+                {{-- 2. Dropdown Jenis Surat --}}
+                <div class="w-full">
+                    <select name="jenis_surat" onchange="this.form.submit()"
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 font-medium transition shadow-sm cursor-pointer">
+                        <option value="">Semua Jenis Surat</option>
+                        @isset($jenisSuratList)
+                            @foreach($jenisSuratList as $jenis)
+                                <option value="{{ $jenis->id }}" {{ request('jenis_surat') == $jenis->id ? 'selected' : '' }}>
+                                    {{ $jenis->nama_surat }}
+                                </option>
                             @endforeach
-                        </select>
+                        @endisset
+                    </select>
+                </div>
 
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                            <svg class="fill-current h-4 w-4" viewBox="0 0 20 20">
-                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                            </svg>
+                {{-- 3. Dropdown Status --}}
+                <div class="w-full">
+                    <select name="status" onchange="this.form.submit()"
+                        class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 font-medium transition shadow-sm cursor-pointer">
+                        <option value="">Semua Status</option>
+                        <option value="diajukan" {{ request('status') == 'diajukan' ? 'selected' : '' }}>Menunggu Verifikasi</option>
+                        <option value="verifikasi" {{ request('status') == 'verifikasi' ? 'selected' : '' }}>Diverifikasi</option>
+                        <option value="persetujuan" {{ request('status') == 'persetujuan' ? 'selected' : '' }}>Persetujuan Pimpinan</option>
+                        <option value="diproses" {{ request('status') == 'diproses' ? 'selected' : '' }}>Diproses</option>
+                        <option value="selesai" {{ request('status') == 'selesai' ? 'selected' : '' }}>Selesai</option>
+                        <option value="ditolak" {{ request('status') == 'ditolak' ? 'selected' : '' }}>Ditolak</option>
+                    </select>
+                </div>
+
+                {{-- 4. Tombol Reset Filter --}}
+                @if(request('search') || request('jenis_surat') || request('status'))
+                    <div class="w-full">
+                        <a href="{{ request()->url() }}" 
+                            class="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800 text-xs font-semibold transition">
+                            <i class="fa-solid fa-arrows-rotate text-[11px]"></i>
+                            Reset
+                        </a>
+                    </div>
+                @endif
+
+            </div>
+
+        </form>
+    </div>
+
+    {{-- ======================================================================================== --}}
+    {{-- CONTAINER DATA UTAMA --}}
+    {{-- ======================================================================================== --}}
+    @if($suratList->count() < 1)
+        
+        {{-- Tampilan Kosong --}}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm p-10 text-center">
+            @if(request('search') || request('jenis_surat') || request('status'))
+                <div class="w-16 h-16 mx-auto rounded-full bg-amber-100 flex items-center justify-center text-amber-600 text-2xl mb-4">
+                    <i class="fa-solid fa-magnifying-glass-blur"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-1.5">Data Tidak Ditemukan</h3>
+                <p class="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
+                    Tidak ada riwayat permohonan surat yang cocok dengan kriteria filter Anda. Silakan reset kembali pencarian Anda.
+                </p>
+            @else
+                <div class="w-16 h-16 mx-auto rounded-full bg-blue-100 flex items-center justify-center text-blue-700 text-2xl mb-4">
+                    <i class="fa-solid fa-envelope-open-text"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-1.5">Belum Ada Pengajuan</h3>
+                <p class="text-gray-500 text-sm max-w-md mx-auto leading-relaxed mb-5">
+                    Anda belum pernah mengajukan surat pelayanan di kelurahan ini.
+                </p>
+                <a href="{{ route('pengajuan.surat') }}"
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-700 to-indigo-700 text-white text-xs font-bold shadow-md hover:shadow-lg transition">
+                    <i class="fa-solid fa-plus text-[10px]"></i> Ajukan Surat Baru
+                </a>
+            @endif
+        </div>
+
+    @else
+
+        {{-- Table Card Container (Slightly Bigger & Spaced Layout) --}}
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden w-full">
+
+            {{-- Desktop Table View --}}
+            <div class="hidden lg:block overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-gray-50/80 border-b border-gray-200">
+                        <tr class="text-left">
+                            <th class="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-400">Kode</th>
+                            <th class="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-400">Jenis Surat</th>
+                            <th class="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-400">Tanggal</th>
+                            <th class="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-400">Status</th>
+                            <th class="px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-gray-400 w-12">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 text-sm text-gray-600">
+                        @foreach($suratList as $surat)
+                            <tr class="hover:bg-gray-50/40 transition">
+                                {{-- Kode --}}
+                                <td class="px-6 py-3.5">
+                                    <div>
+                                        <p class="font-bold text-gray-800 text-sm tracking-tight">{{ $surat->kode_pengajuan }}</p>
+                                        <p class="text-xs text-gray-400 mt-0.5">ID #{{ $surat->id }}</p>
+                                    </div>
+                                </td>
+
+                                {{-- Jenis Surat --}}
+                                <td class="px-6 py-3.5">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-sm flex-shrink-0">
+                                            <i class="fa-solid fa-file-lines"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-gray-800 text-sm leading-snug">{{ $surat->jenisSurat->nama_surat }}</h4>
+                                            <p class="text-xs text-gray-400">Layanan Kelurahan</p>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                {{-- Tanggal --}}
+                                <td class="px-6 py-3.5">
+                                    <p class="font-medium text-gray-700 text-sm">{{ \Carbon\Carbon::parse($surat->created_at)->translatedFormat('d M Y') }}</p>
+                                    <p class="text-xs text-gray-400 mt-0.5">{{ \Carbon\Carbon::parse($surat->created_at)->format('H:i') }} WIB</p>
+                                </td>
+
+                                {{-- Status --}}
+                                <td class="px-6 py-3.5">
+                                    @php
+                                        $statusColor = match($surat->status) {
+                                            'pending', 'diajukan' => 'yellow',
+                                            'verifikasi' => 'blue',
+                                            'menunggu_persetujuan', 'menunggu_persetujuan_pimpinan', 'persetujuan' => 'indigo',
+                                            'proses', 'diproses' => 'orange',
+                                            'selesai' => 'green',
+                                            'ditolak' => 'red',
+                                            default => 'gray'
+                                        };
+
+                                        $statusLabel = match($surat->status) {
+                                            'pending', 'diajukan' => 'Menunggu Verifikasi',
+                                            'verifikasi' => 'Diverifikasi',
+                                            'menunggu_persetujuan', 'menunggu_persetujuan_pimpinan', 'persetujuan' => 'Persetujuan Pimpinan',
+                                            'proses', 'diproses' => 'Diproses',
+                                            'selesai' => 'Selesai',
+                                            'ditolak' => 'Ditolak',
+                                            default => 'Unknown'
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-{{ $statusColor }}-100 text-{{ $statusColor }}-700">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-{{ $statusColor }}-500"></span>
+                                        {{ $statusLabel }}
+                                    </span>
+                                </td>
+
+                                {{-- Aksi (Sudah Pas Jaraknya) --}}
+                                <td class="px-6 py-3.5 align-middle">
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ route('riwayat-pengajuan.detail', $surat->id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs transition whitespace-nowrap">
+                                            <i class="fa-solid fa-eye text-[11px]"></i> Detail
+                                        </a>
+                                        @if($surat->status === 'selesai' && $surat->file_surat)
+                                            <a href="{{ route('downloadSurat', $surat->id) }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-sm whitespace-nowrap">
+                                                <i class="fa-solid fa-file-pdf text-[11px]"></i> Unduh
+                                            </a>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Mobile Card View (Lebih Proporsional) --}}
+            <div class="lg:hidden divide-y divide-gray-100">
+                @foreach($suratList as $surat)
+                    <div class="p-4">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div>
+                                <p class="text-xs text-gray-400 mb-0.5">{{ $surat->kode_pengajuan }}</p>
+                                <h3 class="font-bold text-gray-800 text-sm leading-tight">{{ $surat->jenisSurat->nama_surat }}</h3>
+                                <p class="text-xs text-gray-400 mt-1">{{ \Carbon\Carbon::parse($surat->created_at)->translatedFormat('d M Y') }}</p>
+                            </div>
+                            @php
+                                $statusColor = match($surat->status) {
+                                    'pending', 'diajukan' => 'yellow',
+                                    'verifikasi' => 'blue',
+                                    'menunggu_persetujuan', 'menunggu_persetujuan_pimpinan', 'persetujuan' => 'indigo',
+                                    'proses', 'diproses' => 'orange',
+                                    'selesai' => 'green',
+                                    'ditolak' => 'red',
+                                    default => 'gray'
+                                };
+                                $statusLabel = match($surat->status) {
+                                    'pending', 'diajukan' => 'Menunggu Verifikasi',
+                                    'verifikasi' => 'Diverifikasi',
+                                    'menunggu_persetujuan', 'menunggu_persetujuan_pimpinan', 'persetujuan' => 'Persetujuan Pimpinan',
+                                    'proses', 'diproses' => 'Diproses',
+                                    'selesai' => 'Selesai',
+                                    'ditolak' => 'Ditolak',
+                                    default => 'Status Tidak Diketahui'
+                                };
+                            @endphp
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-{{ $statusColor }}-100 text-{{ $statusColor }}-700 h-fit whitespace-nowrap">
+                                {{ $statusLabel }}
+                            </span>
+                        </div>
+                        <div class="grid @if($surat->status === 'selesai' && $surat->file_surat) grid-cols-2 @else grid-cols-1 @endif gap-2.5 mt-4">
+                            <a href="{{ route('riwayat-pengajuan.detail', $surat->id) }}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition">
+                                <i class="fa-solid fa-eye text-[11px]"></i> Lihat Detail
+                            </a>
+                            @if($surat->status === 'selesai' && $surat->file_surat)
+                                <a href="{{ route('downloadSurat', $surat->id) }}" class="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition shadow-sm">
+                                    <i class="fa-solid fa-file-pdf text-[11px]"></i> Unduh PDF
+                                </a>
+                            @endif
                         </div>
                     </div>
-                </div>
-            @endforeach
-
-            {{-- Search --}}
-            <div class="flex-1 min-w-[250px]">
-                <label for="search" class="text-gray-700 text-sm font-medium mb-1 block">Pencarian</label>
-                <div class="relative h-10">
-                    <input type="text" id="search" placeholder="Cari Berdasarkan Keperluan"
-                        class="w-full h-full pl-10 pr-3 border border-gray-300 bg-white text-gray-600 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500">
-                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    {{-- ========================= --}}
-    {{-- CARD TABEL --}}
-    {{-- ========================= --}}
-    <div class="bg-white shadow-lg rounded-2xl p-4 w-full max-w-7xl mx-auto overflow-x-auto font-inter text-[14px]">
-        <h2 class="text-gray-700 text-lg font-medium mb-4">Pengajuan Terbaru</h2>
-        <hr class="mb-4 border-gray-200">
-
-        <div class="min-w-[900px]" id="table-body">
-
-            {{-- Header --}}
-            <div class="grid grid-cols-5 gap-6 font-semibold mb-2 px-1">
-                <p>Jenis Surat</p>
-                <p class="col-span-1">Keperluan</p>
-                <p>Tanggal</p>
-                <p>Status</p>
-                <p>Aksi</p>
+                @endforeach
             </div>
 
-            {{-- Data Dinamis --}}
-            @foreach ($suratList as $item)
-                @php
-                    $statusColors = [
-                        'Verifikasi' => 'bg-yellow-400',
-                        'Proses' => 'bg-orange-500',
-                        'Selesai' => 'bg-green-500',
-                        'Ditolak' => 'bg-red-500',
-                    ];
-                    $color = $statusColors[$item->status] ?? 'bg-gray-400';
-                @endphp
-
-                <div class="grid grid-cols-5 gap-6 items-center bg-gray-50 p-3 rounded-xl row-item">
-
-                    <p class="jenis">{{ $item->jenis }}</p>
-
-                    <p class="col-span-1 keperluan">{{ $item->keperluan }}</p>
-
-                    <p class="tanggal">{{ $item->tanggal->format('d M Y') }}</p>
-
-                    <div
-                        class="rounded px-3 py-1 text-white text-center w-fit text-[12px] status
-                        @if ($item->status === 'Verifikasi') bg-yellow-400
-                        @elseif($item->status === 'Proses') bg-orange-500
-                        @elseif($item->status === 'Selesai') bg-green-500
-                        @elseif($item->status === 'Ditolak') bg-red-500
-                        @else bg-gray-400 @endif">
-                        {{ $item->status }}
-                    </div>
-
-                    <div class="flex gap-3 actions">
-
-                        {{-- Tombol Lihat --}}
-                        <a href="{{ route('riwayat-pengajuan.detail', $item->id) }}"
-                            class="px-3 py-1 rounded font-semibold text-sm hover:bg-gray-200 text-blue-600">
-                            Lihat
-                        </a>
-
-
-                        {{-- Download hanya jika selesai --}}
-                        @if ($item->status === 'disetujui')
-                            <button
-                                onclick="downloadPDF('{{ $item->nomor_surat }}', '{{ $item->jenisSurat->nama }}', '{{ $item->keperluan }}', '{{ $item->created_at->format('d M Y') }}')"
-                                class="px-3 py-1 rounded font-semibold text-sm hover:bg-gray-200 text-green-600">
-                                Download
-                            </button>
-                        @endif
-                    </div>
-                </div>
-            @endforeach
+            {{-- Pagination Kontrol (Proporsional) --}}
+            <div class="px-6 py-3.5 border-t border-gray-100 bg-gray-50 text-xs">
+                {{ $suratList->links() }}
+            </div>
 
         </div>
-    </div>
 
-    {{-- ========================= --}}
-    {{-- PAGINATION --}}
-    {{-- ========================= --}}
-    <div class="max-w-7xl mx-auto flex justify-between items-center mt-6 px-1 text-[14px]">
-        <div id="pagination-info">Menampilkan 1 hingga 5 dari {{ $suratList->count() }} hasil</div>
-        <div class="flex gap-1" id="pagination-controls"></div>
-    </div>
+    @endif
 
-    {{-- ========================= --}}
-    {{-- FILTER, SEARCH, PAGINATION --}}
-    {{-- ========================= --}}
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const filterStatus = document.getElementById('filter-status');
-            const filterJenis = document.getElementById('filter-jenis-surat');
-            const searchInput = document.getElementById('search');
-            const rows = Array.from(document.querySelectorAll('.row-item'));
-            const info = document.getElementById('pagination-info');
-            const controls = document.getElementById('pagination-controls');
+</div>
 
-            let currentPage = 1;
-            const rowsPerPage = 5;
-
-            function renderTable() {
-                const statusVal = filterStatus.value.toLowerCase();
-                const jenisVal = filterJenis.value.toLowerCase();
-                const searchVal = searchInput.value.toLowerCase();
-
-                const filtered = rows.filter(row => {
-                    const status = row.querySelector('.status').textContent.toLowerCase();
-                    const jenis = row.querySelector('.jenis').textContent.toLowerCase();
-                    const keperluan = row.querySelector('.keperluan').textContent.toLowerCase();
-
-                    return (
-                        (status.includes(statusVal) || statusVal === '') &&
-                        (jenis.includes(jenisVal) || jenisVal === '') &&
-                        (keperluan.includes(searchVal) || searchVal === '')
-                    );
-                });
-
-                const totalRows = filtered.length;
-                const totalPages = Math.ceil(totalRows / rowsPerPage);
-                if (currentPage > totalPages) currentPage = 1;
-
-                const start = (currentPage - 1) * rowsPerPage;
-                const end = start + rowsPerPage;
-
-                rows.forEach(r => r.style.display = 'none');
-                filtered.slice(start, end).forEach(r => r.style.display = '');
-
-                info.textContent =
-                    `Menampilkan ${start + 1} hingga ${end > totalRows ? totalRows : end} dari ${totalRows} hasil`;
-
-                controls.innerHTML = '';
-
-                if (totalPages <= 1) return;
-
-                // Prev Button
-                const prevBtn = document.createElement('button');
-                prevBtn.className = 'w-8 h-8 border border-gray-300 rounded hover:bg-gray-100';
-                prevBtn.textContent = '<';
-                prevBtn.disabled = currentPage === 1;
-                prevBtn.onclick = () => {
-                    currentPage--;
-                    renderTable();
-                };
-                controls.appendChild(prevBtn);
-
-                // Page Numbers
-                for (let i = 1; i <= totalPages; i++) {
-                    const bn = document.createElement('button');
-                    bn.className =
-                        `w-8 h-8 border rounded ${i === currentPage ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 hover:bg-gray-100'}`;
-                    bn.textContent = i;
-                    bn.onclick = () => {
-                        currentPage = i;
-                        renderTable();
-                    };
-                    controls.appendChild(bn);
-                }
-
-                // Next Button
-                const nextBtn = document.createElement('button');
-                nextBtn.className = 'w-8 h-8 border border-gray-300 rounded hover:bg-gray-100';
-                nextBtn.textContent = '>';
-                nextBtn.disabled = currentPage === totalPages;
-                nextBtn.onclick = () => {
-                    currentPage++;
-                    renderTable();
-                };
-                controls.appendChild(nextBtn);
-            }
-
-            filterStatus.onchange = () => {
-                currentPage = 1;
-                renderTable();
-            };
-            filterJenis.onchange = () => {
-                currentPage = 1;
-                renderTable();
-            };
-            searchInput.oninput = () => {
-                currentPage = 1;
-                renderTable();
-            };
-
-            renderTable();
-        });
-    </script>
-
-    {{-- ========================= --}}
-    {{-- DOWNLOAD PDF --}}
-    {{-- ========================= --}}
-    <script>
-        async function downloadPDF(no, jenis, keperluan, tanggal) {
-            const {
-                jsPDF
-            } = window.jspdf;
-            const pdf = new jsPDF();
-
-            pdf.setFont("Helvetica", "bold");
-            pdf.setFontSize(16);
-            pdf.text("Dokumen Surat", 20, 20);
-
-            pdf.setFont("Helvetica", "normal");
-            pdf.setFontSize(12);
-
-            pdf.text(`Nomor Surat      : ${no}`, 20, 40);
-            pdf.text(`Jenis Surat      : ${jenis}`, 20, 50);
-            pdf.text(`Keperluan        : ${keperluan}`, 20, 60);
-            pdf.text(`Tanggal Dibuat   : ${tanggal}`, 20, 70);
-
-            pdf.line(20, 75, 190, 75);
-            pdf.text("Dokumen ini dihasilkan otomatis dari Riwayat Pengajuan.", 20, 90);
-
-            pdf.save(`SURAT-${no}.pdf`);
-        }
-    </script>
 @endsection
