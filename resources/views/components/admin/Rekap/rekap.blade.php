@@ -4,27 +4,14 @@
     {{-- Form action menggunakan url()->current() agar otomatis menyesuaikan dengan halaman Admin atau Pimpinan --}}
     <form action="{{ url()->current() }}" method="GET" class="flex flex-wrap items-end gap-6 mb-6">
         
-        {{-- Filter Laporan (Dinamis: Bulan, Triwulan, Semester, Tahunan) --}}
+        {{-- Filter Laporan (Hanya Bulan) --}}
         <div>
             <label for="filter-bulan" class="text-gray-700 text-sm font-medium mb-1 block">Periode Laporan</label>
             <select name="bulan" id="filter-bulan" onchange="this.form.submit()" class="appearance-none w-56 h-10 px-3 border border-gray-300 bg-white text-gray-700 text-sm rounded-lg focus:outline-none focus:ring-1 focus:ring-blue-500 font-medium">
                 <option value="">Semua Bulan</option>
-                
-                <optgroup label="Bulan Biasa">
-                    @foreach([1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'] as $key => $bulan)
-                        <option value="{{ $key }}" {{ request('bulan') == $key ? 'selected' : '' }}>{{ $bulan }}</option>
-                    @endforeach
-                </optgroup>
-
-                <optgroup label="Laporan Berkala">
-                    <option value="t1" {{ request('bulan') === 't1' ? 'selected' : '' }}>Triwulan I (Jan - Mar)</option>
-                    <option value="t2" {{ request('bulan') === 't2' ? 'selected' : '' }}>Triwulan II (Apr - Jun)</option>
-                    <option value="t3" {{ request('bulan') === 't3' ? 'selected' : '' }}>Triwulan III (Jul - Sep)</option>
-                    <option value="t4" {{ request('bulan') === 't4' ? 'selected' : '' }}>Triwulan IV (Okt - Des)</option>
-                    <option value="s1" {{ request('bulan') === 's1' ? 'selected' : '' }}>Semester I (Jan - Jun)</option>
-                    <option value="s2" {{ request('bulan') === 's2' ? 'selected' : '' }}>Semester II (Jul - Des)</option>
-                    <option value="thn" {{ request('bulan') === 'thn' ? 'selected' : '' }}>Tahunan (Jan - Des)</option>
-                </optgroup>
+                @foreach([1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April', 5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus', 9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'] as $key => $bulan)
+                    <option value="{{ $key }}" {{ request('bulan') == $key ? 'selected' : '' }}>{{ $bulan }}</option>
+                @endforeach
             </select>
         </div>
 
@@ -173,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // 🛠 Download Excel (Hanya mendownload baris data yang lolos filter pencarian)
+    // Download Excel
     downloadExcelBtn.addEventListener('click', function() {
         const wb = XLSX.utils.book_new();
         const wsData = [["Nama Pemohon", "Jenis Surat", "Nomor Surat", "Alamat", "Status", "Tanggal Selesai"]];
@@ -203,7 +190,7 @@ document.addEventListener('DOMContentLoaded', function() {
         XLSX.writeFile(wb, "Rekap_Laporan_Pelayanan_Surat.xlsx");
     });
 
-    // 🛠 Download PDF (Hanya memasukkan baris data yang lolos filter pencarian)
+    // Download PDF
     downloadPdfBtn.addEventListener('click', function() {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF('l', 'mm', 'a4'); 

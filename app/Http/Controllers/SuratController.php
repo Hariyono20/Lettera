@@ -316,79 +316,20 @@ class SuratController extends Controller
         $masterSetting = PengaturanSurat::find(1) ?? new PengaturanSurat();
         $polaNomor = $masterSetting->kode_pola_surat ?? '000/{NUMBER}/ARG/' . date('Y');
 
-        // 2. LOGIKA STRATEGI FILTER RENTANG WAKTU (Dinamis)
-        $startMonth = null;
-        $endMonth = null;
-        $isRange = false;
-        $currentYear = date('Y');
-
-        if ($bulanFilter) {
-            if ($bulanFilter === 't1') { // Triwulan 1
-                $startMonth = 1;
-                $endMonth = 3;
-                $isRange = true;
-            } elseif ($bulanFilter === 't2') { // Triwulan 2
-                $startMonth = 4;
-                $endMonth = 6;
-                $isRange = true;
-            } elseif ($bulanFilter === 't3') { // Triwulan 3
-                $startMonth = 7;
-                $endMonth = 9;
-                $isRange = true;
-            } elseif ($bulanFilter === 't4') { // Triwulan 4
-                $startMonth = 10;
-                $endMonth = 12;
-                $isRange = true;
-            } elseif ($bulanFilter === 's1') { // Semester 1
-                $startMonth = 1;
-                $endMonth = 6;
-                $isRange = true;
-            } elseif ($bulanFilter === 's2') { // Semester 2
-                $startMonth = 7;
-                $endMonth = 12;
-                $isRange = true;
-            } elseif ($bulanFilter === 'thn') { // Setahun Penuh
-                $startMonth = 1;
-                $endMonth = 12;
-                $isRange = true;
-            }
-        }
-
-        // 3. HITUNG STATISTIK RIIL (Mengikuti Filter Rentang atau Bulan Berjalan)
-        $statistikQuery = Surat::query();
-        $statistikSelesaiQuery = Surat::where('status', 'selesai');
-        $statistikProsesQuery = Surat::whereIn('status', ['diproses', 'pending', 'menunggu']);
-        $statistikDitolakQuery = Surat::where('status', 'ditolak');
-
-        if ($isRange) {
-            // Jika filter berkala (Triwulan/Semester/Tahunan)
-            $statistikQuery->whereRaw("CAST(strftime('%m', created_at) AS INTEGER) BETWEEN ? AND ?", [$startMonth, $endMonth]);
-            $statistikSelesaiQuery->whereRaw("CAST(strftime('%m', tanggal_selesai) AS INTEGER) BETWEEN ? AND ?", [$startMonth, $endMonth]);
-            $statistikProsesQuery->whereRaw("CAST(strftime('%m', created_at) AS INTEGER) BETWEEN ? AND ?", [$startMonth, $endMonth]);
-            $statistikDitolakQuery->whereRaw("CAST(strftime('%m', created_at) AS INTEGER) BETWEEN ? AND ?", [$startMonth, $endMonth]);
-        } else {
-            // Jika filter bulan biasa (atau default bulan ini)
-            $bulanStatistik = $bulanFilter ?? date('m');
-            $statistikQuery->whereMonth('created_at', $bulanStatistik);
-            $statistikSelesaiQuery->whereMonth('tanggal_selesai', $bulanStatistik);
-            $statistikProsesQuery->whereMonth('created_at', $bulanStatistik);
-            $statistikDitolakQuery->whereMonth('created_at', $bulanStatistik);
-        }
+        // 2. HITUNG STATISTIK RIIL (Mengikuti Filter Bulan atau Default Bulan Ini)
+        $bulanStatistik = $bulanFilter ?? date('m');
 
         $statistik = [
-            'total'    => $statistikQuery->count(),
-            'selesai'  => $statistikSelesaiQuery->count(),
-            'proses'   => $statistikProsesQuery->count(),
-            'ditolak'  => $statistikDitolakQuery->count(),
+            'total'    => Surat::whereMonth('created_at', $bulanStatistik)->count(),
+            'selesai'  => Surat::where('status', 'selesai')->whereMonth('tanggal_selesai', $bulanStatistik)->count(),
+            'proses'   => Surat::whereIn('status', ['diproses', 'pending', 'menunggu'])->whereMonth('created_at', $bulanStatistik)->count(),
+            'ditolak'  => Surat::where('status', 'ditolak')->whereMonth('created_at', $bulanStatistik)->count(),
         ];
 
-        // 4. AMBIL DATA UTAMA REKAP SURAT
+        // 3. AMBIL DATA UTAMA REKAP SURAT
         $rekapData = Surat::with(['user', 'jenisSurat'])
             ->where('status', 'selesai')
-            ->when($bulanFilter, function ($query, $bulan) use ($isRange, $startMonth, $endMonth) {
-                if ($isRange) {
-                    return $query->whereRaw("CAST(strftime('%m', tanggal_selesai) AS INTEGER) BETWEEN ? AND ?", [$startMonth, $endMonth]);
-                }
+            ->when($bulanFilter, function ($query, $bulan) {
                 return $query->whereMonth('tanggal_selesai', $bulan);
             })
             ->when($searchFilter, function ($query, $search) {
@@ -421,7 +362,7 @@ class SuratController extends Controller
                 return $surat;
             });
 
-        // 5. Kirim data ke View
+        // 4. Kirim data ke View
         $dataKirim = [
             'title'     => 'Rekap & Laporan Pelayanan',
             'rekapData' => $rekapData,
@@ -453,9 +394,7 @@ class SuratController extends Controller
         return view('layouts.pimpinan.permohonan', compact('surats'));
     }
 
-    /**
-     * Approve/Reject Pimpinan beserta Catatan Disposisi
-     */
+
     /**
      * Approve/Reject Pimpinan beserta Catatan Disposisi
      */
