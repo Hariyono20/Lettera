@@ -347,11 +347,24 @@ class SuratController extends Controller
             ->latest('tanggal_selesai')
             ->get()
             ->map(function ($surat) use ($polaNomor) {
-                $dataArray = is_string($surat->data_surat) ? json_decode($surat->data_surat, true) : $surat->data_surat;
+                // Konversi JSON ke Array PHP
+                $rawArray = is_string($surat->data_surat) ? json_decode($surat->data_surat, true) : $surat->data_surat;
 
-                $surat->nama_pemohon = $dataArray['nama'] ?? $dataArray['nama_lengkap'] ?? $surat->user->name ?? 'N/A';
-                $surat->alamat_pemohon = $dataArray['alamat'] ?? $dataArray['alamat_sekarang'] ?? 'Kel. Argomulyo';
+                // Ubah semua KEY di dalam array menjadi HURUF KECIL (Mencegah case-sensitive)
+                $dataArray = is_array($rawArray) ? array_change_key_case($rawArray, CASE_LOWER) : [];
 
+                // Ambil data Nama dengan fallback berjenjang
+                $surat->nama_pemohon = $dataArray['nama'] ??
+                    ($dataArray['nama_lengkap'] ??
+                        ($dataArray['nama_penduduk'] ??
+                            ($surat->user->name ?? 'N/A')));
+
+                // Ambil data Alamat dengan fallback berjenjang
+                $surat->alamat_pemohon = $dataArray['alamat'] ??
+                    ($dataArray['alamat_sekarang'] ??
+                        ($dataArray['alamat_pindah'] ?? 'Kel. Argomulyo'));
+
+                // Pola Penomoran Surat Otomatis jika kosong
                 if (empty($surat->nomor_surat)) {
                     $angkaTigaDigit = str_pad($surat->id, 3, '0', STR_PAD_LEFT);
                     $surat->nomor_surat_fix = str_replace('{NUMBER}', $angkaTigaDigit, $polaNomor);
