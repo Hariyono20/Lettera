@@ -23,17 +23,37 @@ class AuthController extends Controller
     {
         $r->validate([
             'nama' => 'required|string|max:255',
-            'email' => 'required|email|unique:users|max:255',
+            'nik' => 'required|digits:16|unique:users,nik', // Validasi NIK wajib 16 digit angka
+            'email' => 'required|email|unique:users,email|max:255',
             'tanggal_lahir' => 'required|date|before:today',
             'jenis_kelamin' => 'required|in:L,P',
-            'alamat' => 'required|string|max:255',
-            'no_wa' => 'required|string|regex:/^[0-9]{10,15}$/',
-            'password' => 'required|string|min:6|confirmed',
+            'alamat' => 'required|string',
+            'no_wa' => 'required|string|regex:/^[0-9]{10,15}$/', // Validasi nomor WA 10-15 digit
+            'password' => 'required|string|min:8|confirmed', // Password minimal 8 karakter
+        ], [
+            // Pesan Error Kustom Bahasa Indonesia yang Detail
+            'nama.required' => 'Nama lengkap wajib diisi sesuai KTP.',
+            'nik.required' => 'NIK wajib diisi.',
+            'nik.digits' => 'NIK harus tepat berisikan 16 digit angka.',
+            'nik.unique' => 'NIK ini sudah terdaftar dalam sistem.',
+            'email.required' => 'Alamat email aktif wajib diisi.',
+            'email.email' => 'Format alamat email tidak valid (contoh: nama@email.com).',
+            'email.unique' => 'Alamat email ini sudah digunakan.',
+            'tanggal_lahir.required' => 'Tanggal lahir wajib diisi.',
+            'tanggal_lahir.before' => 'Tanggal lahir tidak masuk akal (harus sebelum hari ini).',
+            'jenis_kelamin.required' => 'Silakan pilih jenis kelamin Anda.',
+            'alamat.required' => 'Alamat rumah lengkap wajib diisi.',
+            'no_wa.required' => 'Nomor WhatsApp wajib diisi.',
+            'no_wa.regex' => 'Nomor WhatsApp harus berupa angka dengan panjang 10 sampai 15 digit.',
+            'password.required' => 'Password wajib diisi.',
+            'password.min' => 'Password minimal harus 8 karakter demi keamanan data Anda.',
+            'password.confirmed' => 'Konfirmasi password yang Anda masukkan tidak cocok.',
         ]);
 
         try {
             User::create([
                 'nama' => $r->nama,
+                'nik' => $r->nik,
                 'email' => $r->email,
                 'tanggal_lahir' => $r->tanggal_lahir,
                 'jenis_kelamin' => $r->jenis_kelamin,
@@ -44,20 +64,23 @@ class AuthController extends Controller
             ]);
 
             return redirect()->route('login')
-                ->with('success', 'Registrasi berhasil! Silakan login.');
+                ->with('success', 'Registrasi berhasil! Silakan masuk menggunakan akun Anda.');
         } catch (\Exception $e) {
             return back()
                 ->withInput($r->except('password', 'password_confirmation'))
-                ->with('error', 'Terjadi kesalahan. Coba lagi.');
+                ->with('error', 'Terjadi masalah pada sistem. Silakan coba beberapa saat lagi.');
         }
     }
 
     public function login(Request $r)
     {
-        // Login menggunakan email sesuai instruksi
         $r->validate([
             'email' => 'required|email',
             'password' => 'required|string'
+        ], [
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email salah.',
+            'password.required' => 'Password wajib diisi.',
         ]);
 
         $user = User::where('email', $r->email)->first();
@@ -65,7 +88,7 @@ class AuthController extends Controller
         if (!$user) {
             return back()
                 ->withInput($r->only('email'))
-                ->with('error', 'Email tidak ditemukan!');
+                ->with('error', 'Email tidak terdaftar!');
         }
 
         if (Auth::attempt($r->only('email', 'password'), $r->filled('remember'))) {
@@ -73,7 +96,6 @@ class AuthController extends Controller
 
             $user = auth()->user();
 
-            // ROLE BASED REDIRECT
             if (in_array($user->role, ['admin', 'pegawai'])) {
                 return redirect()->route('admin.dashboard');
             }
@@ -87,7 +109,7 @@ class AuthController extends Controller
 
         return back()
             ->withInput($r->only('email'))
-            ->with('error', 'Password salah!');
+            ->with('error', 'Kata sandi/Password salah!');
     }
 
     public function logout(Request $r)
@@ -99,6 +121,6 @@ class AuthController extends Controller
         $r->session()->regenerateToken();
 
         return redirect()->route('login')
-            ->with('success', 'Anda telah logout. Sampai jumpa, ' . $userName . '!');
+            ->with('success', 'Anda telah keluar. Sampai jumpa kembali, ' . $userName . '!');
     }
 }

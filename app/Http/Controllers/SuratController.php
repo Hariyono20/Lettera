@@ -309,24 +309,43 @@ class SuratController extends Controller
 
     public function rekapSurat(Request $request)
     {
+        // 1. PROTEKSI KEAMANAN: Memastikan hanya Admin dan Pimpinan yang bisa mengakses data rekap
+        if (!auth()->check() || !in_array(auth()->user()->role, ['admin', 'pimpinan'])) {
+            abort(403, 'AKSES DITOLAK: Anda tidak memiliki hak akses untuk melihat menu rekapitulasi laporan.');
+        }
+
         $bulanFilter = $request->input('bulan');
         $searchFilter = $request->input('search');
 
-        // 1. Ambil Pengaturan Pola Nomor Surat
+        // 2. Ambil Pengaturan Pola Nomor Surat
         $masterSetting = PengaturanSurat::find(1) ?? new PengaturanSurat();
         $polaNomor = $masterSetting->kode_pola_surat ?? '000/{NUMBER}/ARG/' . date('Y');
 
-        // 2. HITUNG STATISTIK RIIL (Mengikuti Filter Bulan atau Default Bulan Ini)
+        // 3. Sinkronisasi Filter Bulan (Default bulan berjalan jika tidak ada filter)
         $bulanStatistik = $bulanFilter ?? date('m');
+        $tahunIni = date('Y');
 
+        // 4. HITUNG STATISTIK RIIL (Sudah disinkronkan statusnya dengan Dashboard Admin)
         $statistik = [
-            'total'    => Surat::whereMonth('created_at', $bulanStatistik)->count(),
-            'selesai'  => Surat::where('status', 'selesai')->whereMonth('tanggal_selesai', $bulanStatistik)->count(),
-            'proses'   => Surat::whereIn('status', ['diproses', 'pending', 'menunggu'])->whereMonth('created_at', $bulanStatistik)->count(),
-            'ditolak'  => Surat::where('status', 'ditolak')->whereMonth('created_at', $bulanStatistik)->count(),
+            'total'    => Surat::whereMonth('created_at', $bulanStatistik)->whereYear('created_at', $tahunIni)->count(),
+            'selesai'  => Surat::where('status', 'selesai')->whereMonth('tanggal_selesai', $bulanStatistik)->whereYear('tanggal_selesai', $tahunIni)->count(),
+            'ditolak'  => Surat::where('status', 'ditolak')->whereMonth('created_at', $bulanStatistik)->whereYear('created_at', $tahunIni)->count(),
+
+            // Status di bawah ini disamakan dengan array di indexAdminDashboard agar hitungan sinkron
+            'proses'   => Surat::whereIn('status', [
+                'pending',
+                'diajukan',
+                'proses',
+                'diproses',
+                'menunggu_persetujuan',
+                'menunggu_persetujuan_pimpinan'
+            ])
+                ->whereMonth('created_at', $bulanStatistik)
+                ->whereYear('created_at', $tahunIni)
+                ->count(),
         ];
 
-        // 3. AMBIL DATA UTAMA REKAP SURAT
+        // 5. AMBIL DATA UTAMA REKAP SURAT
         $rekapData = Surat::with(['user', 'jenisSurat'])
             ->where('status', 'selesai')
             ->when($bulanFilter, function ($query, $bulan) {
@@ -375,7 +394,7 @@ class SuratController extends Controller
                 return $surat;
             });
 
-        // 4. Kirim data ke View
+        // 6. Kirim data ke View sesuai dengan Role Pengguna
         $dataKirim = [
             'title'     => 'Rekap & Laporan Pelayanan',
             'rekapData' => $rekapData,

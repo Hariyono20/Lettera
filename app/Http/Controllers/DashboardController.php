@@ -71,7 +71,7 @@ class DashboardController extends Controller
         $bulanIni = date('m');
         $tahunIni = date('Y');
 
-        // 📊 Hitung statistik untuk menyuplai komponen admin yang di-include
+        // 1. Hitung statistik untuk menyuplai komponen admin yang di-include
         $dashboardStatistik = [
             'total_pengajuan' => Surat::whereMonth('created_at', $bulanIni)->whereYear('created_at', $tahunIni)->count(),
             'menunggu_verifikasi' => Surat::whereIn('status', ['pending', 'diajukan'])->count(),
@@ -83,7 +83,7 @@ class DashboardController extends Controller
         // CHART 1: Grafik Bulanan (Surat Masuk Berdasarkan Bulan)
         // -------------------------------------------------------------
         $suratPerBulan = Surat::select(
-            \DB::raw("strftime('%m', created_at) as bulan"),
+            \DB::raw("strftime('%m', created_at) as bulan"), // Catatan: Jika menggunakan MySQL di produksi, ganti strftime menjadi MONTH(created_at)
             \DB::raw('count(*) as total')
         )
             ->whereYear('created_at', $tahunIni)
@@ -116,34 +116,32 @@ class DashboardController extends Controller
         }
 
         // -------------------------------------------------------------
-        // CHART 2: Grafik Jenis Surat
+        // CHART 2: Grafik Jenis Surat Terbanyak (SUDAH DIPERBAIKI)
         // -------------------------------------------------------------
-        $semuaSurat = Surat::with(['jenisSurat'])->get();
-
-        $grupJenis = $semuaSurat->groupBy(function ($surat) {
-            if ($surat->jenisSurat) {
-                return $surat->jenisSurat->nama
-                    ?? $surat->jenisSurat->nama_jenis
-                    ?? $surat->jenisSurat->jenis_surat
-                    ?? 'Jenis Tidak Diketahui';
-            }
-            return 'Tanpa Kategori';
-        });
+        // Menggunakan optimasi Eloquent Group By agar tidak membebani RAM server
+        $topJenisSurat = Surat::selectRaw('jenis_surat_id, count(*) as total')
+            ->groupBy('jenis_surat_id')
+            ->orderBy('total', 'desc')
+            ->take(5) // Mengambil 5 jenis surat teratas seperti di dashboard admin
+            ->with('jenisSurat')
+            ->get();
 
         $chartJenisLabels = [];
         $chartJenisData = [];
 
-        foreach ($grupJenis as $namaJenis => $item) {
-            $chartJenisLabels[] = $namaJenis;
-            $chartJenisData[] = $item->count();
+        foreach ($topJenisSurat as $item) {
+            // PERBAIKAN: Menggunakan properti 'nama_surat' yang terbukti valid di database
+            $chartJenisLabels[] = $item->jenisSurat->nama_surat ?? 'Tidak Diketahui';
+            $chartJenisData[] = $item->total;
         }
 
-        if (empty($chartJenisLabels)) {
+        // Proteksi fallback jika data pengajuan masih kosong agar Chart.js tidak error
+        if (empty($chartJenisData)) {
             $chartJenisLabels = ['Belum Ada Data'];
             $chartJenisData = [0];
         }
 
-        // 3. Kirim semua variabel ke view dashboard pimpinan (Tanpa data permohonan)
+        // 3. Kirim semua variabel ke view dashboard pimpinan
         return view('layouts.pimpinan.app', [
             'title'              => 'Dashboard Pimpinan',
             'statistik'          => $dashboardStatistik,
